@@ -353,7 +353,7 @@ function show_menu() {
 
     # System resources (strictly aligned)
     printf " ${YELLOW}🖥️  System Resources ${BLUE}| CPU:${GREEN} %-2d core ${BLUE}| Memory:${GREEN} %-5s${NC}\n" \
-       $(nproc) $(free -h | awk '/Mem:/{print $4}')
+    $(nproc) $(free -h | awk '/Mem:/{print $4}')
     echo -e "${BLUE}------------------------------------------------------------${NC}"
 
     # Node table (precisely aligned)
@@ -366,19 +366,18 @@ function show_menu() {
         tasks=$(grep -c "Proof submitted" "/root/nexus-node/logs/nexus-${node_id}.log" 2>/dev/null || echo 0)
 
         printf "${PURPLE}%-16s${NC} ${GREEN}%-13s${NC} ${YELLOW}%-12s${NC} ${RED}%-14s${NC}\n" \
-           "$name" "$node_id" "$uptime" "$tasks tasks"
+        "$name" "$node_id" "$uptime" "$tasks tasks"
     done < <(docker ps --filter "name=nexus-node-" --format "{{.Names}}")
 
-    # Function menu (7 options, boxed style)
+    # Function menu (7 options, boxed style with colors)
     echo -e "\n${BLUE}============================================================${NC}"
     echo -e "${CYAN}                ⚙️  Function Menu Options ⚙️${NC}"
     echo -e "${BLUE}------------------------------------------------------------${NC}"
-    echo -e " ${GREEN}[1]${NC} Build Image      ${GREEN}[2]${NC} Start Instances     ${GREEN}[3]${NC} Stop All"
-    echo -e " ${GREEN}[4]${NC} View Logs        ${GREEN}[5]${NC} Restart Node        ${GREEN}[6]${NC} Add Instance"
-    echo -e " ${GREEN}[7]${NC} Update Version   ${GREEN}[0]${NC} Exit"
+    echo -e " ${GREEN}[1]${NC} ${BLUE}Build Image${NC}      ${GREEN}[2]${NC} ${BLUE}Start Instances${NC}    ${GREEN}[3]${NC} ${BLUE}Stop All${NC}"
+    echo -e " ${GREEN}[4]${NC} ${BLUE}View Logs${NC}        ${GREEN}[5]${NC} ${BLUE}Restart Node${NC}       ${GREEN}[6]${NC} ${BLUE}Add Instance${NC}"
+    echo -e " ${GREEN}[7]${NC} ${BLUE}Update Version${NC}   ${GREEN}[0]${NC} ${RED}Exit${NC}"
     echo -e "${BLUE}============================================================${NC}\n"
-
-    }
+}
 
 # ========== Main Program ==========
 check_docker
