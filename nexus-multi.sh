@@ -312,11 +312,11 @@ function show_container_logs() {
 
             trap "echo; return 0" SIGINT
             docker logs -f --tail=20 "$container" 2>&1 | while IFS= read -r line; do
-                if [[ "$line" == *"Waiting"* ]] || [[ "$line" == *"Task completed"* ]]; then
-                    echo -e "\033[34m$line\033[0m"   # Biru
+                if [[ "$line" == *"Waiting"* ]] || [[ "$line" == *"Task completed"* ]] || [[ "$line" == *"Fetching task"* ]]; then
+                    echo -e "\033[36m$line\033[0m"   # Cyan
                 elif [[ "$line" == *"Proof generated for task"* ]]; then
                     echo -e "\033[33m$line\033[0m"   # Kuning
-                elif [[ "$line" == *"Got task"* ]] || [[ "$line" == *"Proving task"* ]] || [[ "$line" == *"Proof submitted successfully"* ]]; then
+                elif [[ "$line" == *"Got task"* ]] || [[ "$line" == *"Proving task"* ]] || [[ "$line" == *"Proof submitted successfully"* ]] || [[ "$line" == *"Submitting proof for task"* ]]; then
                     echo -e "\033[32m$line\033[0m"   # Hijau
                 elif [[ "$line" == *"Error"* ]] || [[ "$line" == *"Failed"* ]] || [[ "$line" == *"ERROR"* ]]; then
                     echo -e "\033[31m$line\033[0m"   # Merah
@@ -329,7 +329,6 @@ function show_container_logs() {
         }
     done
 }
-
 
 function show_menu() {
     clear
