@@ -273,6 +273,7 @@ function calculate_uptime() {
     local minutes=$(( (total_seconds % 3600) / 60 ))
     printf "%02dh%02dm" "$hours" "$minutes"
 }
+
 function show_container_logs() {
     containers=()
     while IFS= read -r line; do
@@ -283,11 +284,11 @@ function show_container_logs() {
 
     while true; do
         clear
-        echo "Nexus Node Log Viewer"
-        echo "--------------------------------"
+        echo -e "\033[36m📝 Nexus Node Log Viewer\033[0m"
+        echo -e "\033[34m--------------------------------\033[0m"
 
         if [ ${#containers[@]} -eq 0 ]; then
-            echo "⚠️ No running instances"
+            echo -e "⚠️  \033[31mNo running instances\033[0m"
             sleep 2
             return
         fi
@@ -295,7 +296,7 @@ function show_container_logs() {
         for i in "${!containers[@]}"; do
             status=$(docker inspect -f '{{.State.Status}}' "${containers[i]}")
             node_id=$(docker inspect "${containers[i]}" --format '{{range .Config.Env}}{{println .}}{{end}}' | grep "^NODE_ID=" | cut -d= -f2)
-            echo "[$((i+1))] ${containers[i]} (Status: $status | Node ID: ${node_id:-Not Set})"
+            echo -e "[$((i+1))] ${containers[i]} (Status: \033[32m$status\033[0m | Node ID: ${node_id:-Not Set})"
         done
 
         echo
@@ -306,15 +307,29 @@ function show_container_logs() {
         [[ "$input" =~ ^[0-9]+$ ]] && [ "$input" -le "${#containers[@]}" ] && {
             container="${containers[$((input-1))]}"
             clear
-            echo "🔍 Real-time log: $container (Ctrl+C to exit)"
-            echo "--------------------------------"
+            echo -e "🔍 \033[36mReal-time log:\033[0m $container (\033[33mCtrl+C to exit\033[0m)"
+            echo -e "\033[34m--------------------------------\033[0m"
+
             trap "echo; return 0" SIGINT
-            docker logs -f --tail=20 "$container"
+            docker logs -f --tail=20 "$container" 2>&1 | while IFS= read -r line; do
+                if [[ "$line" == *"Waiting"* ]] || [[ "$line" == *"Task completed"* ]]; then
+                    echo -e "\033[34m$line\033[0m"   # Biru
+                elif [[ "$line" == *"Proof generated for task"* ]]; then
+                    echo -e "\033[33m$line\033[0m"   # Kuning
+                elif [[ "$line" == *"Got task"* ]] || [[ "$line" == *"Proving task"* ]] || [[ "$line" == *"Proof submitted successfully"* ]]; then
+                    echo -e "\033[32m$line\033[0m"   # Hijau
+                elif [[ "$line" == *"Error"* ]] || [[ "$line" == *"Failed"* ]] || [[ "$line" == *"ERROR"* ]]; then
+                    echo -e "\033[31m$line\033[0m"   # Merah
+                else
+                    echo "$line"                     # Default (tanpa warna)
+                fi
+            done
             trap - SIGINT
             read -rp "Press Enter to continue..."
         }
     done
 }
+
 
 function show_menu() {
     clear
@@ -359,7 +374,7 @@ function show_menu() {
     echo -e "\n${BLUE}============================================================${NC}"
     echo -e "${CYAN}                ⚙️  Function Menu Options ⚙️${NC}"
     echo -e "${BLUE}------------------------------------------------------------${NC}"
-    echo -e " ${GREEN}[1]${NC} Build Image       ${GREEN}[2]${NC} Start Instances     ${GREEN}[3]${NC} Stop All"
+    echo -e " ${GREEN}[1]${NC} Build Image      ${GREEN}[2]${NC} Start Instances     ${GREEN}[3]${NC} Stop All"
     echo -e " ${GREEN}[4]${NC} View Logs        ${GREEN}[5]${NC} Restart Node        ${GREEN}[6]${NC} Add Instance"
     echo -e " ${GREEN}[7]${NC} Update Version   ${GREEN}[0]${NC} Exit"
     echo -e "${BLUE}============================================================${NC}\n"
