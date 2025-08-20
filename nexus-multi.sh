@@ -318,44 +318,53 @@ function show_container_logs() {
 
 function show_menu() {
     clear
-    # Green NEXUS title (clear version)
+   # Green NEXUS title (block version)
     echo -e "${GREEN}"
-    echo "  N   N  EEEEE  X   X  U   U  SSSSS"
-    echo "  NN  N  E       X X   U   U  S    "
-    echo "  N N N  EEE      X    U   U  SSSSS"
-    echo "  N  NN  E       X X   U   U      S"
-    echo "  N   N  EEEEE  X   X   UUU   SSSSS"
+    echo "███╗   ██╗███████╗██╗  ██╗██╗   ██╗███████╗       ██████╗██╗     ██╗"
+    echo "████╗  ██║██╔════╝╚██╗██╔╝██║   ██║██╔════╝      ██╔════╝██║     ██║"
+    echo "██╔██╗ ██║█████╗   ╚███╔╝ ██║   ██║███████╗█████╗██║     ██║     ██║"
+    echo "██║╚██╗██║██╔══╝   ██╔██╗ ██║   ██║╚════██║╚════╝██║     ██║     ██║"
+    echo "██║ ╚████║███████╗██╔╝ ██╗╚██████╔╝███████║      ╚██████╗███████╗██║"
+    echo "╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝       ╚═════╝╚══════╝╚═╝"
     echo -e "${NC}"
+
     
-    # Subtitle (with line spacing)
-    echo -e "\n${CYAN}     ░N░E░X░U░S░ Node Management Console v2.0${NC}"
-   echo -e "${BLUE}==============================================${NC}"
-    
+    # ============================================================
+    # Nexus Node Management Console v2.0
+    # ============================================================
+
+    # Subtitle (dengan line spacing dan styling)
+    echo -e "\n${CYAN}          🚀 NEXUS Node Management Console v2.0 🚀${NC}"
+    echo -e "${BLUE}============================================================${NC}\n"
+
     # System resources (strictly aligned)
-    printf "${YELLOW}🖥️ System Resources ${BLUE}CPU:${GREEN}%-2dcore ${BLUE}Memory:${GREEN}%-5s${NC}\n" \
-           $(nproc) $(free -h | awk '/Mem:/{print $4}')
-    echo -e "${BLUE}----------------------------------------------${NC}"
-    
+    printf " ${YELLOW}🖥️  System Resources ${BLUE}| CPU:${GREEN} %-2d core ${BLUE}| Memory:${GREEN} %-5s${NC}\n" \
+       $(nproc) $(free -h | awk '/Mem:/{print $4}')
+    echo -e "${BLUE}------------------------------------------------------------${NC}"
+
     # Node table (precisely aligned)
-    printf "${CYAN}%-14s %-15s %-12s %-12s\n${NC}" "Container Name" "Node ID" "Uptime" "Tasks Completed"
-    echo -e "${BLUE}----------------------------------------------${NC}"
-    
+    printf "${CYAN}%-16s %-15s %-14s %-16s${NC}\n" "Container Name" "Node ID" "Uptime" "Tasks Completed"
+    echo -e "${BLUE}------------------------------------------------------------${NC}"
+
     while read -r name; do
-        node_id=$(docker inspect $name --format '{{.Config.Env}}' | grep -o 'NODE_ID=[0-9]*' | cut -d= -f2)
+        node_id=$(docker inspect "$name" --format '{{.Config.Env}}' | grep -o 'NODE_ID=[0-9]*' | cut -d= -f2)
         uptime=$(calculate_uptime "$name")
         tasks=$(grep -c "Proof submitted" "/root/nexus-node/logs/nexus-${node_id}.log" 2>/dev/null || echo 0)
-        
-        printf "${PURPLE}%-14s${NC} ${GREEN}%-11s${NC} ${YELLOW}%-9s${NC} ${RED}%-12s${NC}\n" \
-               "$name" "$node_id" "$uptime" "$tasks tasks"
+
+        printf "${PURPLE}%-16s${NC} ${GREEN}%-13s${NC} ${YELLOW}%-12s${NC} ${RED}%-14s${NC}\n" \
+           "$name" "$node_id" "$uptime" "$tasks tasks"
     done < <(docker ps --filter "name=nexus-node-" --format "{{.Names}}")
-    
-    # Function menu (7 options)
-    echo -e "${BLUE}==============================================${NC}"
-    echo -e "${CYAN}1. Build Image    2. Start Instances   3. Stop All${NC}"
-    echo -e "${CYAN}4. View Logs      5. Restart Node      6. Add Instance${NC}"
-    echo -e "${CYAN}7. Update Version   0. Exit${NC}"
-    echo -e "${BLUE}==============================================${NC}"
-}
+
+    # Function menu (7 options, boxed style)
+    echo -e "\n${BLUE}============================================================${NC}"
+    echo -e "${CYAN}                ⚙️  Function Menu Options ⚙️${NC}"
+    echo -e "${BLUE}------------------------------------------------------------${NC}"
+    echo -e " ${GREEN}[1]${NC} Build Image       ${GREEN}[2]${NC} Start Instances     ${GREEN}[3]${NC} Stop All"
+    echo -e " ${GREEN}[4]${NC} View Logs        ${GREEN}[5]${NC} Restart Node        ${GREEN}[6]${NC} Add Instance"
+    echo -e " ${GREEN}[7]${NC} Update Version   ${GREEN}[0]${NC} Exit"
+    echo -e "${BLUE}============================================================${NC}\n"
+
+    }
 
 # ========== Main Program ==========
 check_docker
