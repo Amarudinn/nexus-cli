@@ -42,49 +42,44 @@ function prepare_build_files() {
 FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND=noninteractive
 
-# BAGIAN 1: DEPENDENSI STABIL (AKAN DI-CACHE)
+# ✅ BAGIAN 1: DEPENDENSI STABIL (AKAN DI-CACHE)
+# Lapisan ini hanya akan dibuat sekali dan akan digunakan lagi di build berikutnya
+# selama tidak ada perubahan di sini.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     curl git build-essential pkg-config libssl-dev \
     clang libclang-dev cmake jq ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
+# Instal Rust (juga akan di-cache)
 RUN curl --retry 3 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly --profile minimal
 ENV PATH="/root/.cargo/bin:${PATH}"
 
-# BAGIAN 2: KODE SUMBER (CLONE PERTAMA KALI)
+
+# ✅ BAGIAN 2: KODE SUMBER & KOMPILASI (BAGIAN DINAMIS)
 WORKDIR /app
+# Clone repositori HANYA jika direktori belum ada.
+# Lapisan ini juga akan di-cache setelah dijalankan pertama kali.
 RUN git clone --depth=1 https://github.com/nexus-xyz/nexus-cli.git
 
-# ✅ BAGIAN 3: LOGIKA UPDATE DAN BUILD YANG PINTAR
+# Ini adalah "pemicu" update kita.
+# Dengan ARG, kita bisa membatalkan cache di titik ini secara sengaja.
 ARG CACHE_BUSTER=
 WORKDIR /app/nexus-cli
-# 'RUN' ini sekarang berisi logika untuk memeriksa sebelum membangun.
-RUN \
-  echo "Cache buster: $CACHE_BUSTER" && \
-  echo "▶️ Checking for nexus-cli updates..." && \
-  git config --global --add safe.directory /app/nexus-cli && \
-  # 1. Simpan hash commit saat ini (sebelum update)
-  OLD_HASH=$(git rev-parse HEAD) && \
-  # 2. Lakukan git pull untuk mengambil pembaruan
-  git pull && \
-  # 3. Dapatkan hash commit yang baru (setelah update)
-  NEW_HASH=$(git rev-parse HEAD) && \
-  # 4. Bandingkan kedua hash
-  if [ "$OLD_HASH" = "$NEW_HASH" ]; then \
-    # 5. JIKA SAMA: Tidak ada pembaruan, lewati proses build
-    echo "✅ Already on the latest version. Build process skipped." ; \
-  else \
-    # 6. JIKA BERBEDA: Ada pembaruan, jalankan proses build
-    echo "🔄 New version detected, starting build process..." && \
-    cd /app/nexus-cli/clients/cli && \
-    cargo build --release && \
+# Perintah 'git pull' akan mengambil kode terbaru.
+# 'git config' ditambahkan untuk keamanan jika ada masalah kepemilikan.
+RUN echo "Updating source with cache buster: $CACHE_BUSTER" && \
+    git config --global --add safe.directory /app/nexus-cli && \
+    git pull
+
+# Build ulang aplikasi. Lapisan ini akan otomatis berjalan ulang karena
+# lapisan 'git pull' di atasnya selalu diperbarui.
+WORKDIR /app/nexus-cli/clients/cli
+RUN cargo build --release && \
     strip target/release/nexus-network && \
     cp target/release/nexus-network /usr/local/bin/ && \
-    chmod +x /usr/local/bin/nexus-network ; \
-  fi
+    chmod +x /usr/local/bin/nexus-network
 
-# BAGIAN 4: FINALISASI IMAGE
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
