@@ -365,43 +365,62 @@ function show_menu() {
     echo "██║ ╚████║███████╗██╔╝ ██╗╚██████╔╝███████║      ╚██████╗███████╗██║"
     echo "╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝       ╚═════╝╚══════╝╚═╝"
     echo -e "${NC}"
-
     
-    # ============================================================
-    # Nexus Node Management Console v2.0
-    # ============================================================
+    # Subtitle
+    echo -e "\n${CYAN}                🚀 NEXUS Node Management Console v2.2 🚀${NC}"
+    echo -e "${BLUE}==================================================================================${NC}\n"
 
-    # Subtitle (dengan line spacing dan styling)
-    echo -e "\n${CYAN}          🚀 NEXUS Node Management Console v2.0 🚀${NC}"
-    echo -e "${BLUE}============================================================${NC}\n"
-
-    # System resources (strictly aligned)
+    # System resources
     printf " ${YELLOW}🖥️  System Resources ${BLUE}| CPU:${GREEN} %-2d core ${BLUE}| Memory:${GREEN} %-5s${NC}\n" \
-       $(nproc) $(free -h | awk '/Mem:/{print $4}')
-    echo -e "${BLUE}------------------------------------------------------------${NC}"
+        $(nproc) $(free -h | awk '/Mem:/{print $4}')
+    echo -e "${BLUE}----------------------------------------------------------------------------------${NC}"
 
-    # Node table (precisely aligned)
-    printf "${CYAN}%-16s %-15s %-14s %-16s${NC}\n" "Container Name" "Node ID" "Uptime" "Tasks Completed"
-    echo -e "${BLUE}------------------------------------------------------------${NC}"
+    # ✅ HEADER TABEL BARU DENGAN KOLOM THREADS
+    printf "${CYAN}%-16s %-10s %-8s %-9s %-8s %-10s %-16s${NC}\n" \
+        "Container Name" "Node ID" "CPU" "RAM" "Threads" "Uptime" "Tasks Completed"
+    echo -e "${BLUE}----------------------------------------------------------------------------------${NC}"
 
-    while read -r name; do
-        node_id=$(docker inspect "$name" --format '{{.Config.Env}}' | grep -o 'NODE_ID=[0-9]*' | cut -d= -f2)
-        uptime=$(calculate_uptime "$name")
-        tasks=$(grep -c "Proof submitted" "/root/nexus-node/logs/nexus-${node_id}.log" 2>/dev/null || echo 0)
+    # Mendapatkan daftar kontainer nexus yang berjalan
+    running_containers=$(docker ps --filter "name=nexus-node-" --format "{{.Names}}")
 
-        printf "${PURPLE}%-16s${NC} ${GREEN}%-13s${NC} ${YELLOW}%-12s${NC} ${RED}%-14s${NC}\n" \
-           "$name" "$node_id" "$uptime" "$tasks tasks"
-    done < <(docker ps --filter "name=nexus-node-" --format "{{.Names}}")
+    if [ -z "$running_containers" ]; then
+        echo -e "  ⚠️  No running instances found."
+    else
+        # Loop melalui setiap kontainer yang berjalan
+        while read -r name; do
+            node_id=$(docker inspect "$name" --format '{{.Config.Env}}' | grep -o 'NODE_ID=[0-9]*' | cut -d= -f2)
+            uptime=$(calculate_uptime "$name")
+            tasks=$(grep -c "Proof submitted" "/root/nexus-node/logs/nexus-${node_id}.log" 2>/dev/null || echo 0)
+            
+            # Mendapatkan stats CPU & RAM
+            stats_line=$(docker stats --no-stream --format "{{.CPUPerc}}|{{.MemUsage}}" "$name" 2>/dev/null)
+            if [[ -n "$stats_line" ]]; then
+                cpu_usage=$(echo "$stats_line" | cut -d'|' -f1)
+                mem_usage=$(echo "$stats_line" | cut -d'|' -f2 | awk '{print $1}')
+            else
+                cpu_usage="N/A"
+                mem_usage="N/A"
+            fi
+            
+            # ✅ MENDAPATKAN JUMLAH THREADS DARI KONFIGURASI KONTAINER
+            # Mengambil argumen start (--max-threads) dari metadata kontainer
+            threads=$(docker inspect -f '{{.Config.Cmd}}' "$name" | tr ' ' '\n' | grep -A 1 -E -- "--max-threads" | tail -n 1 || echo "N/A")
 
-    # Function menu (7 options, boxed style)
-    echo -e "\n${BLUE}============================================================${NC}"
-    echo -e "${CYAN}                ⚙️  Function Menu Options ⚙️${NC}"
-    echo -e "${BLUE}------------------------------------------------------------${NC}"
-    echo -e " ${GREEN}[1]${NC} Build Image      ${GREEN}[2]${NC} Start Instances     ${GREEN}[3]${NC} Stop All"
-    echo -e " ${GREEN}[4]${NC} View Logs        ${GREEN}[5]${NC} Restart Node        ${GREEN}[6]${NC} Add Instance"
+            # ✅ PRINTF BARU DENGAN DATA THREADS
+            printf "${PURPLE}%-16s${NC} ${GREEN}%-10s${NC} ${CYAN}%-8s${NC} ${CYAN}%-9s${NC} ${GREEN}%-8s${NC} ${YELLOW}%-10s${NC} ${RED}%-16s${NC}\n" \
+                "$name" "$node_id" "$cpu_usage" "$mem_usage" "$threads" "$uptime" "$tasks tasks"
+
+        done <<< "$running_containers"
+    fi
+
+    # Function menu
+    echo -e "\n${BLUE}==================================================================================${NC}"
+    echo -e "${CYAN}                            ⚙️  Function Menu Options ⚙️${NC}"
+    echo -e "${BLUE}----------------------------------------------------------------------------------${NC}"
+    echo -e " ${GREEN}[1]${NC} Build Image      ${GREEN}[2]${NC} Start Instances    ${GREEN}[3]${NC} Stop All"
+    echo -e " ${GREEN}[4]${NC} View Logs        ${GREEN}[5]${NC} Restart Node       ${GREEN}[6]${NC} Add Instance"
     echo -e " ${GREEN}[7]${NC} Update Version   ${GREEN}[0]${NC} Exit"
-    echo -e "${BLUE}============================================================${NC}\n"
-
+    echo -e "${BLUE}==================================================================================${NC}\n"
 }
 
 # ========== Main Program ==========
