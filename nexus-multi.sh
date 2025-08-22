@@ -328,7 +328,7 @@ function show_menu() {
 
     clear
    # Green NEXUS title (block version)
-    echo -e "${GREEN}"
+    echo -e "${WHITE}"
     echo "███╗   ██╗███████╗██╗  ██╗██╗   ██╗███████╗       ██████╗██╗     ██╗"
     echo "████╗  ██║██╔════╝╚██╗██╔╝██║   ██║██╔════╝      ██╔════╝██║     ██║"
     echo "██╔██╗ ██║█████╗   ╚███╔╝ ██║   ██║███████╗█████╗██║     ██║     ██║"
@@ -336,7 +336,7 @@ function show_menu() {
     echo "██║ ╚████║███████╗██╔╝ ██╗╚██████╔╝███████║      ╚██████╗███████╗██║"
     echo "╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝       ╚═════╝╚══════╝╚═╝"
     echo -e "${NC}"
-    echo -e "${CYAN}            Nexus Node Management Console v2.1${NC}"
+    echo -e "${CYAN}                Nexus Node Management Console v2.1${NC}"
 
     # --- System & Docker Info ---
     total_containers=$(docker ps -a --filter "name=nexus-node-" | wc -l)
@@ -345,7 +345,7 @@ function show_menu() {
     mem_free=$(free -h | awk '/^Mem:/{print $4}')
 
     echo -e "${BLUE}╭───────────────────────────────────────────────────────────────────────────────╮${NC}"
-    printf "${BLUE}│ ${YELLOW}🖥️ System: ${GREEN}%-2s Cores / %-6s Free${NC} ${YELLOW}🐳 Docker: ${GREEN}%d Running / %d Total Nodes${NC}${BLUE}       │\n" "$cpu_cores" "$mem_free" "$((running_containers - 1))" "$((total_containers - 1))"
+    printf "${BLUE}│ ${YELLOW}🖥️ System: ${GREEN}%-2s Cores / %-6s Free${NC} ${YELLOW}🐳 Docker: ${GREEN}%d Running / %d Total Nodes${NC}${BLUE}        │\n" "$cpu_cores" "$mem_free" "$((running_containers - 1))" "$((total_containers - 1))"
     echo -e "${BLUE}├───────────────────────────────────────────────────────────────────────────────┤${NC}"
 
     # --- Node Table Header ---
@@ -382,10 +382,10 @@ function show_menu() {
 
     # --- Function Menu ---
     echo -e "${BLUE}╭─────────────────────────── ${CYAN}MENU ${BLUE}────────────────────────────╮${NC}"
-    echo -e "${BLUE}│  ${CYAN}1. Build/Rebuild Image${NC}       ${BLUE}│ ${CYAN}5. Restart a Node${NC}           │"
-    echo -e "${BLUE}│  ${CYAN}2. Start Multiple Instances${NC}  ${BLUE}│ ${CYAN}6. Add One Instance${NC}         │"
-    echo -e "${BLUE}│  ${CYAN}3. Stop All Nodes${NC}            ${BLUE}│ ${CYAN}7. Update to Latest Code${NC}    │"
-    echo -e "${BLUE}│  ${CYAN}4. View Node Logs${NC}            ${BLUE}│ ${CYAN}0. Exit Program${NC}             │"
+    echo -e "${BLUE}│ ${CYAN}1. Build/Rebuild Image${NC}      ${BLUE}│ ${CYAN}5. Restart a Node${NC}           ${BLUE}│"
+    echo -e "${BLUE}│ ${CYAN}2. Start Multiple Instances${NC} ${BLUE}│ ${CYAN}6. Add One Instance${NC}         ${BLUE}│"
+    echo -e "${BLUE}│ ${CYAN}3. Stop All Nodes${NC}           ${BLUE}│ ${CYAN}7. Update to Latest Code${NC}    ${BLUE}│"
+    echo -e "${BLUE}│ ${CYAN}4. View Node Logs${NC}           ${BLUE}│ ${CYAN}0. Exit Program${NC}             ${BLUE}│"
     echo -e "${BLUE}╰─────────────────────────────────────────────────────────────╯${NC}"
 }
 
