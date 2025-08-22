@@ -379,7 +379,7 @@ function show_menu() {
             printf "${BLUE}║${PURPLE} %-18s ${BLUE}│${GREEN} %-10s ${BLUE}│${YELLOW} %-7s ${BLUE}│${YELLOW} %-7s ${BLUE}│${RED} %-12s ${BLUE}║${NC}\n" \
                    "$name" "$node_id" "$cpu_usage" "$mem_usage" "$tasks tasks"
         done
-    fi
+    if
 
     # Footer and Menu Options
     echo -e "${BLUE}╚════════════════════╧════════════╧═════════╧═════════╧══════════════╝${NC}"
