@@ -344,11 +344,11 @@ function show_menu() {
     mem_free=$(free -h | awk '/^Mem:/{print $4}')
 
     echo -e "${BLUE}╭───────────────────────────────────────────────────────────────────────────────╮${NC}"
-    printf "${YELLOW} 🖥️ System: ${GREEN}%-2s Cores / %-6s Free${NC} ${YELLOW}🐳 Docker: ${GREEN}%d Running / %d Total Nodes${NC}│\n"
+    printf "${YELLOW} 🖥️ System: ${GREEN}%-2s Cores / %-6s Free${NC} ${YELLOW}🐳 Docker: ${GREEN}%d Running / %d Total Nodes${NC} \n" "$cpu_cores" "$mem_free" "$((running_containers - 1))" "$((total_containers - 1))"
     echo -e "${BLUE}├───────────────────────────────────────────────────────────────────────────────┤${NC}"
 
     # --- Node Table Header ---
-    printf "${BLUE}│ ${CYAN}%-15s │ %-10s │ %-8s │ %-8s │ %-10s │ %-12s${NC} │\n" "CONTAINER" "NODE ID" "UPTIME" "CPU %" "RAM USAGE" "TASKS"
+    printf "${BLUE}│ ${CYAN}%-15s │ %-10s │ %-8s │ %-8s │ %-10s │ %-12s${NC}│\n" "CONTAINER" "NODE ID" "UPTIME" "CPU %" "RAM USAGE" "TASKS"
     echo -e "${BLUE}├───────────────────────────────────────────────────────────────────────────────┤${NC}"
 
     # --- Node Table Body ---
