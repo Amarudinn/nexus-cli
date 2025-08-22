@@ -342,26 +342,37 @@ function show_container_logs() {
             trap "echo -e '\n${YELLOW}Log view stopped.${NC}'; return 0" SIGINT
             
             # Mengalirkan output log ke loop untuk pewarnaan real-time
-            docker logs -f --tail=50 "$container" | while IFS= read -r line; do
-                case "$line" in
-                    Success*|StateChange*|Refresh*)
-                        # Warna hijau untuk pesan sukses dan informasi status
-                        echo -e "${GREEN}${line}${NC}"
-                        ;;
-                    Error*)
-                        # Warna merah untuk pesan error yang jelas
-                        echo -e "${RED}${line}${NC}"
-                        ;;
-                    Waiting*)
-                        # Warna kuning untuk status menunggu atau transisi
-                        echo -e "${YELLOW}${line}${NC}"
-                        ;;
-                    *)
-                        # Tidak ada warna untuk baris log lainnya
-                        echo "$line"
-                        ;;
-                esac
-            done
+docker logs -f --tail=50 "$container" | while IFS= read -r line; do
+    # Define warna CYAN di awal jika belum ada secara global
+    CYAN='\033[0;36m'
+    
+    case "$line" in
+        Error*)
+            # Warna MERAH untuk semua jenis error
+            echo -e "${RED}${line}${NC}"
+            ;;
+        *"Proof submitted successfully for task"*)
+            # Warna HIJAU untuk pesan submit yang sudah berhasil
+            echo -e "${GREEN}${line}${NC}"
+            ;;
+        *"Submitting proof for task"*)
+            # Warna KUNING untuk proses submit yang sedang berjalan
+            echo -e "${YELLOW}${line}${NC}"
+            ;;
+        *"Fetching task"*|*"Waiting - ready for next task"*)
+            # Warna BIRU MUDA (CYAN) untuk status menunggu atau mengambil task
+            echo -e "${CYAN}${line}${NC}"
+            ;;
+        *"Task completed, ready for next task"*|*"Got task"*|*"Proving task"*|*"Proof generated for task"*)
+            # Warna HIJAU untuk progres dan task yang berhasil
+            echo -e "${GREEN}${line}${NC}"
+            ;;
+        *)
+            # Tidak ada warna untuk baris log lainnya
+            echo "$line"
+            ;;
+    esac
+done
             
             # Mereset trap ke kondisi normal
             trap - SIGINT
