@@ -390,35 +390,22 @@ function show_menu() {
 }
 
 # ========== Main Program ==========
-# ========== Main Program ==========
 check_docker
 init_dirs
 
-    while true; do
-        show_menu
-        # Langsung cek kondisi read di dalam 'if' untuk menghindari 'set -e'
-        if read -t 1 -N 1 choice; then
-            # Jika read berhasil mendapat input, hentikan loop real-time
-            break
-        fi
-    done
-
-    # Proses pilihan pengguna di luar loop real-time
+while true; do
+    show_menu
+    read -rp "Please select an option: " choice
     case "$choice" in
         1) prepare_build_files; build_image;;
         2) start_instances;;
         3) docker rm -f $(docker ps -aq --filter "name=nexus-node-") 2>/dev/null || true;;
         4) show_container_logs;;
         5) restart_node;;
-        6) add_one_instance;;
-        7) prepare_build_files; build_image_latest;;
+        6) add_one_instance ;;
+        7) prepare_build_files; build_image_latest ;;
         0) echo "Exiting"; exit 0;;
-        *) # Opsi tidak valid diabaikan dalam mode real-time
-           ;;
+        *) echo "Invalid option";;
     esac
-
-    # Hanya minta "Press Enter" jika ada aksi yang dilakukan (bukan pilihan invalid)
-    if [[ "$choice" =~ ^[0-7]$ ]]; then
-        read -rp "Press Enter to continue..."
-    fi
+    read -rp "Press Enter to continue..."
 done
