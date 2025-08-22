@@ -327,15 +327,16 @@ function show_menu() {
     NC='\033[0m' # No Color
 
     clear
-    # --- Header ---
+   # Green NEXUS title (block version)
     echo -e "${GREEN}"
-    echo "    _   __  ___________  __  ________"
-    echo "   / | / / / ____/ __  \/ / / / ____/"
-    echo "  /  |/ / / __/ / / / / / / / __/   "
-    echo " / /|  / / /___/ /_/ / /_/ / /___   "
-    echo "/_/ |_/ /_____/\_____\____/_____/   "
+    echo "███╗   ██╗███████╗██╗  ██╗██╗   ██╗███████╗       ██████╗██╗     ██╗"
+    echo "████╗  ██║██╔════╝╚██╗██╔╝██║   ██║██╔════╝      ██╔════╝██║     ██║"
+    echo "██╔██╗ ██║█████╗   ╚███╔╝ ██║   ██║███████╗█████╗██║     ██║     ██║"
+    echo "██║╚██╗██║██╔══╝   ██╔██╗ ██║   ██║╚════██║╚════╝██║     ██║     ██║"
+    echo "██║ ╚████║███████╗██╔╝ ██╗╚██████╔╝███████║      ╚██████╗███████╗██║"
+    echo "╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝       ╚═════╝╚══════╝╚═╝"
     echo -e "${NC}"
-    echo -e "${CYAN}          Node Management Console v2.1${NC}"
+    echo -e "${CYAN}            Nexus Node Management Console v2.1${NC}"
 
     # --- System & Docker Info ---
     total_containers=$(docker ps -a --filter "name=nexus-node-" | wc -l)
@@ -380,11 +381,11 @@ function show_menu() {
     echo -e "${BLUE}╰───────────────────────────────────────────────────────────────────────────────╯${NC}"
 
     # --- Function Menu ---
-    echo -e "${BLUE}╭─────────────────────────── ${CYAN}MENU ────────────────────────────╮${NC}"
-    echo -e " ${CYAN}│  1. Build/Rebuild Image${NC}       ${BLUE}│ ${CYAN}5. Restart a Node${NC}           │"
-    echo -e " ${CYAN}│  2. Start Multiple Instances${NC}  ${BLUE}│ ${CYAN}6. Add One Instance${NC}         │"
-    echo -e " ${CYAN}│  3. Stop All Nodes${NC}            ${BLUE}│ ${CYAN}7. Update to Latest Code${NC}    │"
-    echo -e " ${CYAN}│  4. View Node Logs${NC}            ${BLUE}│ ${CYAN}0. Exit Program${NC}             │"
+    echo -e "${BLUE}╭─────────────────────────── ${CYAN}MENU ${BLUE}────────────────────────────╮${NC}"
+    echo -e "${BLUE}│  ${CYAN}1. Build/Rebuild Image${NC}       ${BLUE}│ ${CYAN}5. Restart a Node${NC}           │"
+    echo -e "${BLUE}│  ${CYAN}2. Start Multiple Instances${NC}  ${BLUE}│ ${CYAN}6. Add One Instance${NC}         │"
+    echo -e "${BLUE}│  ${CYAN}3. Stop All Nodes${NC}            ${BLUE}│ ${CYAN}7. Update to Latest Code${NC}    │"
+    echo -e "${BLUE}│  ${CYAN}4. View Node Logs${NC}            ${BLUE}│ ${CYAN}0. Exit Program${NC}             │"
     echo -e "${BLUE}╰─────────────────────────────────────────────────────────────╯${NC}"
 }
 
