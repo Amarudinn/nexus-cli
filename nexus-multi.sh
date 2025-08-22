@@ -304,7 +304,7 @@ function show_container_logs() {
         else
             # --- Table Header ---
             printf "${BLUE}│ ${CYAN}%-4s │ %-20s │ %-15s │ %-20s ${BLUE}│\n" "NO" "CONTAINER NAME" "STATUS" "NODE ID"
-            echo -e "${BLUE}├──────┼──────────────────────┼─────────────────┼──────────────────────┤${NC}"
+            echo -e "${BLUE}├──────┼──────────────────────┼─────────────────┼───────────────────┤${NC}"
 
             # --- Table Body ---
             for i in "${!containers[@]}"; do
@@ -335,13 +335,13 @@ function show_container_logs() {
             container="${containers[$((input-1))]}"
             clear
             echo -e "${BLUE}╭──────────────────────────────────────────────────────────╮${NC}"
-            echo -e "${BLUE}│ 🔍 ${CYAN}Real-time log for: ${GREEN}$container ${NC}(Press Ctrl+C to exit) ${BLUE}│${NC}"
+            echo -e "${BLUE}│ 🔍 ${CYAN}Real-time log for: ${GREEN}$container ${NC}(Press Ctrl+C to exit)${BLUE}│${NC}"
             echo -e "${BLUE}╰──────────────────────────────────────────────────────────╯${NC}"
             
             # Menangkap Ctrl+C agar kembali dengan mulus
             trap "echo -e '\n${YELLOW}Log view stopped.${NC}'; return 0" SIGINT
             
-# Mengalirkan output log ke loop untuk pewarnaan real-time
+            # Mengalirkan output log ke loop untuk pewarnaan real-time
 docker logs -f --tail=50 "$container" | while IFS= read -r line; do
     # Define warna CYAN di awal jika belum ada secara global
     CYAN='\033[0;36m'
