@@ -341,7 +341,7 @@ function show_container_logs() {
             # Menangkap Ctrl+C agar kembali dengan mulus
             trap "echo -e '\n${YELLOW}Log view stopped.${NC}'; return 0" SIGINT
             
-            # Mengalirkan output log ke loop untuk pewarnaan real-time
+# Mengalirkan output log ke loop untuk pewarnaan real-time
 docker logs -f --tail=50 "$container" | while IFS= read -r line; do
     # Define warna CYAN di awal jika belum ada secara global
     CYAN='\033[0;36m'
