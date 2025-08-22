@@ -303,7 +303,7 @@ function show_container_logs() {
             echo -e "${BLUE}│ ${YELLOW}⚠️ No running instances found.                                  ${BLUE}│${NC}"
         else
             # --- Table Header ---
-            printf "${BLUE}│ ${CYAN}%-4s${BLUE}│ ${CYAN}%-20s${BLUE}│ ${CYAN}%-15s${BLUE}│ ${CYAN}%-20s ${BLUE}│\n" "NO" "CONTAINER NAME" "STATUS" "NODE ID"
+            printf "${BLUE}│ ${CYAN}%-4s${BLUE}│ ${CYAN}%-20s${BLUE}│ ${CYAN}%-15s${BLUE}│ ${CYAN}%-20s${BLUE}│\n" "NO" "CONTAINER NAME" "STATUS" "NODE ID"
             echo -e "${BLUE}├──────┼──────────────────────┼─────────────────┼──────────────────┤${NC}"
 
             # --- Table Body ---
@@ -319,7 +319,7 @@ function show_container_logs() {
                     "exited"|"dead") status_color=$RED ;;
                 esac
 
-                printf "${BLUE}│ ${CYAN}%-4s ${BLUE}│ ${CYAN}%-20s ${BLUE}│ ${status_color}%-15s ${BLUE}│ ${GREEN}%-20s ${BLUE}│\n" "$((i+1))" "$container_name" "$status" "${node_id:-Not Set}"
+                printf "${BLUE}│ ${CYAN}%-4s${BLUE}│ ${CYAN}%-20s${BLUE}│ ${status_color}%-15s${BLUE}│ ${GREEN}%-20s${BLUE}│\n" "$((i+1))" "$container_name" "$status" "${node_id:-Not Set}"
             done
         fi
         
