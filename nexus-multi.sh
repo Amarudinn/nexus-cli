@@ -303,7 +303,7 @@ function show_container_logs() {
             echo -e "${BLUE}│ ${YELLOW}⚠️ No running instances found.                                  ${BLUE}│${NC}"
         else
             # --- Table Header ---
-            printf "${BLUE}│ ${CYAN}%-4s ${BLUE}│ %-20s ${BLUE}│ %-15s ${BLUE}│ %-20s ${BLUE}│\n" "NO" "CONTAINER" "STATUS" "NODE ID"
+            printf "${BLUE}│ ${CYAN}%-4s${BLUE}│ ${CYAN}%-20s${BLUE}│ ${CYAN}%-15s${BLUE}│ ${CYAN}%-20s ${BLUE}│\n" "NO" "CONTAINER NAME" "STATUS" "NODE ID"
             echo -e "${BLUE}├──────┼──────────────────────┼─────────────────┼──────────────────┤${NC}"
 
             # --- Table Body ---
