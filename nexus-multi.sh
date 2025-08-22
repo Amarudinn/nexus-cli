@@ -273,8 +273,19 @@ function calculate_uptime() {
     local minutes=$(( (total_seconds % 3600) / 60 ))
     printf "%02dh%02dm" "$hours" "$minutes"
 }
+
+# ✅ Show logs for a specific container (Beautified)
 function show_container_logs() {
+    # --- Color Definitions ---
+    GREEN='\033[0;32m'
+    BLUE='\033[0;34m'
+    CYAN='\033[0;36m'
+    YELLOW='\033[0;33m'
+    RED='\033[0;31m'
+    NC='\033[0m' # No Color
+
     containers=()
+    # Mengambil nama container yang aktif saja untuk menu pemilihan
     while IFS= read -r line; do
         if [[ "$line" =~ ^nexus-node-[0-9]+$ ]]; then
             containers+=("$line")
@@ -283,36 +294,61 @@ function show_container_logs() {
 
     while true; do
         clear
-        echo "Nexus Node Log Viewer"
-        echo "--------------------------------"
+        # --- Header ---
+        echo -e "${BLUE}╭──────────────────────────────────────────────────────────────────╮${NC}"
+        echo -e "${BLUE}│${CYAN} 📜 Nexus Node Log Viewer                                        ${BLUE}│${NC}"
+        echo -e "${BLUE}├──────────────────────────────────────────────────────────────────┤${NC}"
 
         if [ ${#containers[@]} -eq 0 ]; then
-            echo "⚠️ No running instances"
-            sleep 2
-            return
+            echo -e "${BLUE}│ ${YELLOW}⚠️ No running instances found.                                  ${BLUE}│${NC}"
+        else
+            # --- Table Header ---
+            printf "${BLUE}│ ${CYAN}%-4s │ %-20s │ %-15s │ %-20s ${BLUE}│\n" "NO" "CONTAINER NAME" "STATUS" "NODE ID"
+            echo -e "${BLUE}├──────┼──────────────────────┼─────────────────┼──────────────────────┤${NC}"
+
+            # --- Table Body ---
+            for i in "${!containers[@]}"; do
+                local container_name="${containers[i]}"
+                local status=$(docker inspect -f '{{.State.Status}}' "$container_name" 2>/dev/null || echo "stopped")
+                local node_id=$(docker inspect "$container_name" --format '{{range .Config.Env}}{{if eq (index (split . "=") 0) "NODE_ID"}}{{(index (split . "=") 1)}}{{end}}{{end}}')
+
+                # --- Dynamic Status Coloring ---
+                local status_color=$YELLOW # Default color
+                case "$status" in
+                    "running") status_color=$GREEN ;;
+                    "exited"|"dead") status_color=$RED ;;
+                esac
+
+                printf "${BLUE}│ ${CYAN}%-4s ${BLUE}│ ${CYAN}%-20s ${BLUE}│ ${status_color}%-15s ${BLUE}│ ${GREEN}%-20s ${BLUE}│\n" "$((i+1))" "$container_name" "$status" "${node_id:-Not Set}"
+            done
         fi
+        
+        # --- Footer & Menu ---
+        echo -e "${BLUE}╰──────────────────────────────────────────────────────────────────╯${NC}"
+        echo -e "${BLUE}│ ${CYAN}[1-${#containers[@]}]${NC} View Logs   ${CYAN}[0]${NC} Back to Main Menu"
+        echo -e "${BLUE}╰───────────────────────────────────────────"
 
-        for i in "${!containers[@]}"; do
-            status=$(docker inspect -f '{{.State.Status}}' "${containers[i]}")
-            node_id=$(docker inspect "${containers[i]}" --format '{{range .Config.Env}}{{println .}}{{end}}' | grep "^NODE_ID=" | cut -d= -f2)
-            echo "[$((i+1))] ${containers[i]} (Status: $status | Node ID: ${node_id:-Not Set})"
-        done
-
-        echo
-        echo "[0] Back to main menu"
         read -rp "Please select a container: " input
 
         [[ "$input" == "0" ]] && return
-        [[ "$input" =~ ^[0-9]+$ ]] && [ "$input" -le "${#containers[@]}" ] && {
+        if [[ "$input" =~ ^[0-9]+$ ]] && [ "$input" -le "${#containers[@]}" ] && [ "$input" -gt 0 ]; then
             container="${containers[$((input-1))]}"
             clear
-            echo "🔍 Real-time log: $container (Ctrl+C to exit)"
-            echo "--------------------------------"
-            trap "echo; return 0" SIGINT
-            docker logs -f --tail=20 "$container"
+            echo -e "${BLUE}╭──────────────────────────────────────────────────────────╮${NC}"
+            echo -e "${BLUE}│ 🔍 ${CYAN}Real-time log for: ${GREEN}$container ${NC}(Press Ctrl+C to exit) ${BLUE}│${NC}"
+            echo -e "${BLUE}╰──────────────────────────────────────────────────────────╯${NC}"
+            
+            # Menangkap Ctrl+C agar kembali dengan mulus
+            trap "echo -e '\n${YELLOW}Log view stopped.${NC}'; return 0" SIGINT
+            
+            docker logs -f --tail=50 "$container"
+            
+            # Mereset trap ke kondisi normal
             trap - SIGINT
+            
+            echo # Baris baru untuk kerapian
             read -rp "Press Enter to continue..."
-        }
+        fi
     done
 }
 
@@ -336,7 +372,7 @@ function show_menu() {
     echo "██║ ╚████║███████╗██╔╝ ██╗╚██████╔╝███████║      ╚██████╗███████╗██║"
     echo "╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝       ╚═════╝╚══════╝╚═╝"
     echo -e "${NC}"
-    echo -e "${CYAN}                Nexus Node Management Console v2.1${NC}"
+    echo -e "${CYAN}                        Nexus Node Management Console v2.1${NC}"
 
     # --- System & Docker Info ---
     total_containers=$(docker ps -a --filter "name=nexus-node-" | wc -l)
