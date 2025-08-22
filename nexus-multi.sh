@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# ✅ Global Configuration Variables
+# ✅ Global configuration variables
 DEFAULT_THREADS=8
 NEXUS_START_FLAGS="--headless --max-threads $DEFAULT_THREADS"
 BASE_DIR="/root/nexus-node"
@@ -12,21 +12,20 @@ CONFIG_DIR="$BASE_DIR/config"
 
 # ✅ Check if jq is installed
 command -v jq >/dev/null 2>&1 || {
-    echo "❌ jq command is missing. Please install it first: sudo apt install -y jq" >&2
+    echo "❌ jq command is missing, please install it first: sudo apt install -y jq" >&2
     exit 1
 }
 
-# ✅ Initialize directory permissions
+# ✅ Optimize directory permissions
 function init_dirs() {
     mkdir -p "$BUILD_DIR" "$LOG_DIR" "$CONFIG_DIR"
     chmod 755 "$LOG_DIR"
     sudo chown -R $USER:$USER "$BASE_DIR" 2>/dev/null || true
 }
 
-# ✅ Check and install Docker if not present
 function check_docker() {
     if ! [ -x "$(command -v docker)" ]; then
-        echo "Docker is not installed. Installing now..."
+        echo "Docker is not installed, installing now..."
         apt update
         apt install -y apt-transport-https ca-certificates curl software-properties-common
         curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
@@ -36,7 +35,6 @@ function check_docker() {
     fi
 }
 
-# ✅ Prepare files for building the Docker image
 function prepare_build_files() {
   mkdir -p "$BUILD_DIR"
 
@@ -55,7 +53,7 @@ RUN apt-get update && \
 RUN curl --retry 3 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly --profile minimal
 ENV PATH="/root/.cargo/bin:${PATH}"
 
-# Clone nexus-cli source code
+# Clone nexus-cli source
 WORKDIR /app
 RUN git clone --depth=1 https://github.com/nexus-xyz/nexus-cli.git
 
@@ -101,27 +99,26 @@ EOF
   chmod +x "$BUILD_DIR/entrypoint.sh"
 }
 
-# ✅ Build the Docker image, checking if it already exists
+# ✅ Add check for existing image
 function build_image() {
     cd "$BUILD_DIR"
     if docker image inspect "$IMAGE_NAME" &>/dev/null; then
-        read -rp "Image already exists. Do you want to rebuild? [y/N] " choice
+        read -rp "Image already exists, do you want to rebuild? [y/N] " choice
         [[ "$choice" != [yY] ]] && return
     fi
 
-    echo "🔧 Starting Docker image build..."
+    echo "🔧 Starting to build Docker image..."
     docker build --no-cache -t "$IMAGE_NAME" . || {
         echo "❌ Image build failed" >&2
         exit 1
     }
 
-    echo "✅ Image build complete. Version info:"
+    echo "✅ Image build complete, version info:"
     docker run --rm --entrypoint nexus-network "$IMAGE_NAME" --version || {
         echo "⚠️ Version check failed" >&2
     }
 }
 
-# ✅ Build the latest version of the image
 function build_image_latest() {
     cd "$BUILD_DIR"
     echo "🔧 Updating to the latest official version..."
@@ -129,11 +126,10 @@ function build_image_latest() {
         echo "❌ Image build failed" >&2
         exit 1
     }
-    echo "✅ Image update complete. Current version:"
+    echo "✅ Image update complete, current version:"
     docker run --rm --entrypoint nexus-network "$IMAGE_NAME" --version
 }
 
-# ✅ Validate that the node ID is a number
 function validate_node_id() {
     [[ "$1" =~ ^[0-9]+$ ]] || {
         echo "❌ node-id must be a number" >&2
@@ -142,24 +138,24 @@ function validate_node_id() {
     return 0
 }
 
-# ✅ Start multiple node instances
+# ✅ Use global start parameters
 function start_instances() {
-    read -rp "Enter the number of instances to create: " INSTANCE_COUNT
+    read -rp "Please enter the number of instances to create: " INSTANCE_COUNT
     [[ "$INSTANCE_COUNT" =~ ^[0-9]+$ ]] || { echo "❌ Please enter a valid number"; exit 1; }
 
     for i in $(seq 1 "$INSTANCE_COUNT"); do
         while true; do
-            read -rp "Enter the node-id for instance $i: " NODE_ID
+            read -rp "Please enter the node-id for instance #$i: " NODE_ID
             validate_node_id "$NODE_ID" && break
         done
 
         # ✅ Enhanced conflict check
         if docker inspect "nexus-node-$i" &>/dev/null; then
-            read -rp "Container nexus-node-$i already exists. Do you want to replace it? [y/N] " choice
+            read -rp "Container nexus-node-$i already exists, do you want to replace it? [y/N] " choice
             if [[ "$choice" =~ ^[yY] ]]; then
                 echo "🔄 Removing old container..."
                 docker rm -f "nexus-node-$i" || {
-                    echo "❌ Failed to delete container, skipping this instance"
+                    echo "❌ Container removal failed, skipping this instance"
                     continue
                 }
             else
@@ -175,7 +171,7 @@ function start_instances() {
             -v "$LOG_DIR":/nexus-data \
             "$IMAGE_NAME" \
             start --node-id "$NODE_ID" --max-threads 8 --headless; then
-            echo "❌ Failed to start instance nexus-node-$i"
+            echo "❌ Instance nexus-node-$i failed to start"
             continue
         fi
         
@@ -183,9 +179,8 @@ function start_instances() {
     done
 }
 
-# ✅ Add a single new instance
 function add_one_instance() {
-    # Get the highest existing instance number
+    # Get the maximum number (compatible with non-numeric container names)
     MAX_ID=$(docker ps --filter "name=nexus-node-" --format '{{.Names}}' | 
              awk -F'-' '{if($NF ~ /^[0-9]+$/) print $NF}' | 
              sort -n | 
@@ -195,12 +190,12 @@ function add_one_instance() {
     NEXT_IDX=$(( ${MAX_ID:-0} + 1 ))
 
     while true; do
-        read -rp "Please enter the node-id (must be a number): " NODE_ID
+        read -rp "Please enter node-id (must be a number): " NODE_ID
         [[ "$NODE_ID" =~ ^[0-9]+$ ]] && break
         echo "❌ node-id must be a number!"
     done
 
-    # Start the instance
+    # Start instance
     docker run -dit \
         --name "nexus-node-${NEXT_IDX}" \
         -e NODE_ID="$NODE_ID" \
@@ -208,10 +203,9 @@ function add_one_instance() {
         "$IMAGE_NAME" \
         start --node-id "$NODE_ID" --max-threads 8 --headless
 
-    echo "✅ Instance nexus-node-${NEXT_IDX} started successfully (Threads: 8)"
+    echo "✅ Instance nexus-node-${NEXT_IDX} started successfully (threads: 8)"
 }
 
-# ✅ Restart a specific or all nodes
 function restart_node() {
     containers=()
     while IFS= read -r line; do
@@ -221,19 +215,19 @@ function restart_node() {
     done < <(docker ps --filter "name=nexus-node-" --format "{{.Names}}")
 
     if [ ${#containers[@]} -eq 0 ]; then
-        echo "⚠️ No running instances found"
+        echo "⚠️ No running instances"
         sleep 2
         return
     fi
 
-    echo "Select a node to restart:"
+    echo "Please select the node to restart:"
     for i in "${!containers[@]}"; do
         echo "[$((i+1))] ${containers[i]}"
     done
     echo "[a] Restart all nodes"
-    echo "[0] Return"
+    echo "[0] Back"
 
-    read -rp "Enter your choice: " choice
+    read -rp "Please enter your choice: " choice
     case "$choice" in
         [1-9])
             if [ "$choice" -le "${#containers[@]}" ]; then
@@ -257,8 +251,6 @@ function restart_node() {
     esac
     read -rp "Press Enter to continue..."
 }
-
-# ✅ Calculate container uptime
 function calculate_uptime() {
     local container=$1
     local created=$(docker inspect --format '{{.Created}}' "$container")
@@ -279,10 +271,8 @@ function calculate_uptime() {
     
     local hours=$((total_seconds / 3600))
     local minutes=$(( (total_seconds % 3600) / 60 ))
-    printf "%02dh %02dm" "$hours" "$minutes"
+    printf "%02dh%02dm" "$hours" "$minutes"
 }
-
-# ✅ Show logs for a specific container
 function show_container_logs() {
     containers=()
     while IFS= read -r line; do
@@ -297,7 +287,7 @@ function show_container_logs() {
         echo "--------------------------------"
 
         if [ ${#containers[@]} -eq 0 ]; then
-            echo "⚠️ No running instances found"
+            echo "⚠️ No running instances"
             sleep 2
             return
         fi
@@ -309,14 +299,14 @@ function show_container_logs() {
         done
 
         echo
-        echo "[0] Return to main menu"
+        echo "[0] Back to main menu"
         read -rp "Please select a container: " input
 
         [[ "$input" == "0" ]] && return
         [[ "$input" =~ ^[0-9]+$ ]] && [ "$input" -le "${#containers[@]}" ] && {
             container="${containers[$((input-1))]}"
             clear
-            echo "🔍 Real-time logs for: $container (Ctrl+C to exit)"
+            echo "🔍 Real-time log: $container (Ctrl+C to exit)"
             echo "--------------------------------"
             trap "echo; return 0" SIGINT
             docker logs -f --tail=20 "$container"
@@ -326,69 +316,77 @@ function show_container_logs() {
     done
 }
 
-# ✅ Display the main menu (Beautified with resource usage)
 function show_menu() {
-    clear
-    # Color definitions
+    # --- Color Definitions ---
     GREEN='\033[0;32m'
     BLUE='\033[0;34m'
-    YELLOW='\033[1;33m'
     CYAN='\033[0;36m'
+    YELLOW='\033[0;33m'
     PURPLE='\033[0;35m'
     RED='\033[0;31m'
     NC='\033[0m' # No Color
 
-    # Title
+    clear
+    # --- Header ---
     echo -e "${GREEN}"
-    echo "  N   N  EEEEE  X   X  U   U  SSSSS"
-    echo "  NN  N  E       X X   U   U  S    "
-    echo "  N N N  EEE      X    U   U  SSSSS"
-    echo "  N  NN  E       X X   U   U      S"
-    echo "  N   N  EEEEE  X   X   UUU   SSSSS"
+    echo "    _   __  ___________  __  ________"
+    echo "   / | / / / ____/ __  \/ / / / ____/"
+    echo "  /  |/ / / __/ / / / / / / / __/   "
+    echo " / /|  / / /___/ /_/ / /_/ / /___   "
+    echo "/_/ |_/ /_____/\_____\____/_____/   "
     echo -e "${NC}"
-    echo -e "${CYAN}     ░N░E░X░U░S░ Node Management Console v2.1${NC}"
-    
-    # System Resources
-    echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════════╗${NC}"
-    printf "${BLUE}║${YELLOW} 🖥️  System: ${GREEN}%-2d Cores CPU / %-5s Free RAM                           ${BLUE}║${NC}\n" \
-           $(nproc) $(free -h | awk '/Mem:/{print $4}')
-    echo -e "${BLUE}╠════════════════════╤════════════╤═════════╤═════════╤══════════════╣${NC}"
+    echo -e "${CYAN}          Node Management Console v2.1${NC}"
 
-    # Node Table Header
-    printf "${BLUE}║${CYAN} Container Name     ${BLUE}│${CYAN} Node ID    ${BLUE}│${CYAN} CPU %%   ${BLUE}│${CYAN} Memory  ${BLUE}│${CYAN} Tasks Done   ${BLUE}║${NC}\n"
-    echo -e "${BLUE}╠════════════════════╪════════════╪═════════╪═════════╪══════════════╣${NC}"
+    # --- System & Docker Info ---
+    total_containers=$(docker ps -a --filter "name=nexus-node-" | wc -l)
+    running_containers=$(docker ps --filter "name=nexus-node-" | wc -l)
+    cpu_cores=$(nproc)
+    mem_free=$(free -h | awk '/^Mem:/{print $4}')
 
-    # Node Table Content
+    echo -e "${BLUE}╭───────────────────────────────────────────────────────────────────────────────╮${NC}"
+    printf "${YELLOW}│ 🖥️  System: ${GREEN}%-2s Cores / %-6s Free${NC}  ${YELLOW}🐳 Docker: ${GREEN}%d Running / %d Total Nodes${NC}          │\n" "$cpu_cores" "$mem_free" "$((running_containers - 1))" "$((total_containers - 1))"
+    echo -e "${BLUE}├───────────────────────────────────────────────────────────────────────────────┤${NC}"
+
+    # --- Node Table Header ---
+    printf "│ ${CYAN}%-15s │ %-10s │ %-8s │ %-8s │ %-10s │ %-12s${NC} │\n" "CONTAINER" "NODE ID" "UPTIME" "CPU %" "RAM USAGE" "TASKS"
+    echo -e "${BLUE}├───────────────────────────────────────────────────────────────────────────────┤${NC}"
+
+    # --- Node Table Body ---
+    # Fetch all running container names first
     containers=$(docker ps --filter "name=nexus-node-" --format "{{.Names}}")
     if [ -z "$containers" ]; then
-        echo -e "${BLUE}║${YELLOW} No running Nexus nodes found.                                        ${BLUE}║${NC}"
+        echo -e "│ ${YELLOW}No running Nexus nodes found. Use option '2' to start instances.${NC}                  │"
     else
-        # Get stats for all running containers at once
-        stats=$(docker stats --no-stream --format "{{.Name}} {{.CPUPerc}} {{.MemUsage}}" $containers)
-        
-        echo "$containers" | while read -r name; do
+        # Use docker stats to get CPU and RAM for all containers at once for efficiency
+        docker stats --no-stream --format "{{.Name}},{{.CPUPerc}},{{.MemUsage}}" $containers | while IFS=, read -r name cpu_perc mem_usage; do
+            # Extract only the used memory part (e.g., "12.34MiB")
+            ram=$(echo "$mem_usage" | awk '{print $1}')
+            
+            # Get other details
             node_id=$(docker inspect "$name" --format '{{range .Config.Env}}{{if eq (index (split . "=") 0) "NODE_ID"}}{{(index (split . "=") 1)}}{{end}}{{end}}')
             uptime=$(calculate_uptime "$name")
-            tasks=$(grep -c "Proof submitted" "$LOG_DIR/nexus-${node_id}.log" 2>/dev/null || echo 0)
-            
-            # Extract stats for the current container
-            container_stats=$(echo "$stats" | grep "^$name ")
-            cpu_usage=$(echo "$container_stats" | awk '{print $2}')
-            mem_usage=$(echo "$container_stats" | awk '{print $3}')
+            tasks=$(grep -c "Proof submitted" "${LOG_DIR}/nexus-${node_id}.log" 2>/dev/null || echo 0)
 
-            printf "${BLUE}║${PURPLE} %-18s ${BLUE}│${GREEN} %-10s ${BLUE}│${YELLOW} %-7s ${BLUE}│${YELLOW} %-7s ${BLUE}│${RED} %-12s ${BLUE}║${NC}\n" \
-                   "$name" "$node_id" "$cpu_usage" "$mem_usage" "$tasks tasks"
+            # Print formatted row
+            printf "│ ${PURPLE}%-15s${NC} │ ${GREEN}%-10s${NC} │ ${YELLOW}%-8s${NC} │ ${CYAN}%-8s${NC} │ ${CYAN}%-10s${NC} │ ${RED}%-4s tasks${NC}     │\n" \
+                "$name" \
+                "${node_id:-N/A}" \
+                "$uptime" \
+                "$cpu_perc" \
+                "$ram" \
+                "$tasks"
         done
     fi
+    echo -e "${BLUE}╰───────────────────────────────────────────────────────────────────────────────╯${NC}"
 
-    # Footer and Menu Options
-    echo -e "${BLUE}╚════════════════════╧════════════╧═════════╧═════════╧══════════════╝${NC}"
-    echo -e "${CYAN}  [1] Build Image    [2] Start Instances   [3] Stop All Nodes${NC}"
-    echo -e "${CYAN}  [4] View Logs      [5] Restart Node      [6] Add Instance${NC}"
-    echo -e "${CYAN}  [7] Update Version   [0] Exit Console${NC}"
-    echo -e "${BLUE}══════════════════════════════════════════════════════════════════════════${NC}"
+    # --- Function Menu ---
+    echo -e "${BLUE}╭─────────────────────────── MENU ────────────────────────────╮${NC}"
+    echo -e "│ ${CYAN}1. Build/Rebuild Image${NC}      │ ${CYAN}5. Restart a Node${NC}         │"
+    echo -e "│ ${CYAN}2. Start Multiple Instances${NC}  │ ${CYAN}6. Add One Instance${NC}        │"
+    echo -e "│ ${CYAN}3. Stop All Nodes${NC}            │ ${CYAN}7. Update to Latest Code${NC}   │"
+    echo -e "│ ${CYAN}4. View Node Logs${NC}            │ ${CYAN}0. Exit Program${NC}            │"
+    echo -e "${BLUE}╰─────────────────────────────────────────────────────────────╯${NC}"
 }
-
 
 # ========== Main Program ==========
 check_docker
