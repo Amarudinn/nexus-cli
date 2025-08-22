@@ -344,11 +344,11 @@ function show_menu() {
     mem_free=$(free -h | awk '/^Mem:/{print $4}')
 
     echo -e "${BLUE}╭───────────────────────────────────────────────────────────────────────────────╮${NC}"
-    printf "${BLUE}│  ${YELLOW}🖥️ System: ${GREEN}%-2s Cores / %-6s Free${NC} ${YELLOW}🐳 Docker: ${GREEN}%d Running / %d Total Nodes${NC}${BLUE}│\n" "$cpu_cores" "$mem_free" "$((running_containers - 1))" "$((total_containers - 1))"
+    printf "${BLUE}│  ${YELLOW}🖥️ System: ${GREEN}%-2s Cores / %-6s Free${NC} ${YELLOW}🐳 Docker: ${GREEN}%d Running / %d Total Nodes${NC}${BLUE}       │\n" "$cpu_cores" "$mem_free" "$((running_containers - 1))" "$((total_containers - 1))"
     echo -e "${BLUE}├───────────────────────────────────────────────────────────────────────────────┤${NC}"
 
     # --- Node Table Header ---
-    printf "${BLUE}│ ${CYAN}%-15s ${BLUE}│ %-10s ${BLUE}│ %-8s ${BLUE}│ %-8s ${BLUE}│ %-10s ${BLUE}│ %-12s${NC}${BLUE}│\n" "CONTAINER" "NODE ID" "UPTIME" "CPU %" "RAM USAGE" "TASKS"
+    printf "${BLUE}│ ${CYAN}%-15s ${BLUE}│ ${CYAN}%-10s ${BLUE}│ ${CYAN}%-8s ${BLUE}│ ${CYAN}%-8s ${BLUE}│ ${CYAN}%-10s ${BLUE}│ ${CYAN}%-12s${NC}${BLUE}│\n" "CONTAINER" "NODE ID" "UPTIME" "CPU %" "RAM USAGE" "TASKS"
     echo -e "${BLUE}├───────────────────────────────────────────────────────────────────────────────┤${NC}"
 
     # --- Node Table Body ---
@@ -368,7 +368,7 @@ function show_menu() {
             tasks=$(grep -c "Proof submitted" "${LOG_DIR}/nexus-${node_id}.log" 2>/dev/null || echo 0)
 
             # Print formatted row
-            printf "${BLUE}│ ${PURPLE}%-15s${NC} ${BLUE}│ ${GREEN}%-10s${NC} ${BLUE}│ ${YELLOW}%-8s${NC} ${BLUE}│ ${CYAN}%-8s${NC} ${BLUE}│ ${CYAN}%-10s${NC} ${BLUE}│ ${GREEN}%-4s tasks${NC} ${BLUE}│\n" \
+            printf "${BLUE}│ ${PURPLE}%-15s${NC} ${BLUE}│ ${GREEN}%-10s${NC} ${BLUE}│ ${YELLOW}%-8s${NC} ${BLUE}│ ${CYAN}%-8s${NC} ${BLUE}│ ${CYAN}%-10s${NC} ${BLUE}│ ${GREEN}%-4s tasks${NC} ${BLUE} │\n" \
                 "$name" \
                 "${node_id:-N/A}" \
                 "$uptime" \
@@ -380,11 +380,11 @@ function show_menu() {
     echo -e "${BLUE}╰───────────────────────────────────────────────────────────────────────────────╯${NC}"
 
     # --- Function Menu ---
-    echo -e "${BLUE}╭─────────────────────────── MENU ────────────────────────────╮${NC}"
-    echo -e " ${CYAN}1. Build/Rebuild Image${NC}       ${BLUE}│ ${CYAN}5. Restart a Node${NC}           "
-    echo -e " ${CYAN}2. Start Multiple Instances${NC}  ${BLUE}│ ${CYAN}6. Add One Instance${NC}         "
-    echo -e " ${CYAN}3. Stop All Nodes${NC}            ${BLUE}│ ${CYAN}7. Update to Latest Code${NC}    "
-    echo -e " ${CYAN}4. View Node Logs${NC}            ${BLUE}│ ${CYAN}0. Exit Program${NC}             "
+    echo -e "${BLUE}╭─────────────────────────── ${CYAN}MENU ────────────────────────────╮${NC}"
+    echo -e " ${CYAN}│  1. Build/Rebuild Image${NC}       ${BLUE}│ ${CYAN}5. Restart a Node${NC}           │"
+    echo -e " ${CYAN}│  2. Start Multiple Instances${NC}  ${BLUE}│ ${CYAN}6. Add One Instance${NC}         │"
+    echo -e " ${CYAN}│  3. Stop All Nodes${NC}            ${BLUE}│ ${CYAN}7. Update to Latest Code${NC}    │"
+    echo -e " ${CYAN}│  4. View Node Logs${NC}            ${BLUE}│ ${CYAN}0. Exit Program${NC}             │"
     echo -e "${BLUE}╰─────────────────────────────────────────────────────────────╯${NC}"
 }
 
