@@ -304,7 +304,7 @@ function show_container_logs() {
         else
             # --- Table Header ---
             printf "${BLUE}│ ${CYAN}%-4s${BLUE}│ ${CYAN}%-20s${BLUE}│ ${CYAN}%-15s${BLUE}│ ${CYAN}%-20s${BLUE}│\n" "NO" "CONTAINER NAME" "STATUS" "NODE ID"
-            echo -e "${BLUE}├─────┼────────────────────┼────────────────┼──────────────────────┤${NC}"
+            echo -e "${BLUE}├─────┼─────────────────────┼────────────────┼─────────────────────┤${NC}"
 
             # --- Table Body ---
             for i in "${!containers[@]}"; do
