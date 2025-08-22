@@ -382,30 +382,46 @@ function show_menu() {
 
     # --- Function Menu ---
     echo -e "${BLUE}╭─────────────────────────── ${CYAN}MENU ${BLUE}────────────────────────────╮${NC}"
-    echo -e "${BLUE}│ ${CYAN}1. Build/Rebuild Image${NC}      ${BLUE}│ ${CYAN}5. Restart a Node${NC}           ${BLUE}│"
-    echo -e "${BLUE}│ ${CYAN}2. Start Multiple Instances${NC} ${BLUE}│ ${CYAN}6. Add One Instance${NC}         ${BLUE}│"
-    echo -e "${BLUE}│ ${CYAN}3. Stop All Nodes${NC}           ${BLUE}│ ${CYAN}7. Update to Latest Code${NC}    ${BLUE}│"
-    echo -e "${BLUE}│ ${CYAN}4. View Node Logs${NC}           ${BLUE}│ ${CYAN}0. Exit Program${NC}             ${BLUE}│"
+    echo -e "${BLUE}│ ${CYAN}1. Build/Rebuild Image${NC}       ${BLUE}│ ${CYAN}5. Restart a Node${NC}          ${BLUE}│"
+    echo -e "${BLUE}│ ${CYAN}2. Start Multiple Instances${NC}  ${BLUE}│ ${CYAN}6. Add One Instance${NC}        ${BLUE}│"
+    echo -e "${BLUE}│ ${CYAN}3. Stop All Nodes${NC}            ${BLUE}│ ${CYAN}7. Update to Latest Code${NC}   ${BLUE}│"
+    echo -e "${BLUE}│ ${CYAN}4. View Node Logs${NC}            ${BLUE}│ ${CYAN}0. Exit Program${NC}            ${BLUE}│"
     echo -e "${BLUE}╰─────────────────────────────────────────────────────────────╯${NC}"
 }
 
+# ========== Main Program ==========
 # ========== Main Program ==========
 check_docker
 init_dirs
 
 while true; do
-    show_menu
-    read -rp "Please select an option: " choice
+    # Loop internal untuk real-time update
+    while true; do
+        show_menu
+        # Membaca 1 karakter input dengan timeout 1 detik
+        read -t 1 -N 1 choice
+        # Jika ada input (exit code 0), hentikan loop real-time
+        if [ $? -eq 0 ]; then
+            break
+        fi
+    done
+
+    # Proses pilihan pengguna di luar loop real-time
     case "$choice" in
         1) prepare_build_files; build_image;;
         2) start_instances;;
         3) docker rm -f $(docker ps -aq --filter "name=nexus-node-") 2>/dev/null || true;;
         4) show_container_logs;;
         5) restart_node;;
-        6) add_one_instance ;;
-        7) prepare_build_files; build_image_latest ;;
+        6) add_one_instance;;
+        7) prepare_build_files; build_image_latest;;
         0) echo "Exiting"; exit 0;;
-        *) echo "Invalid option";;
+        *) # Opsi tidak valid diabaikan dalam mode real-time
+           ;;
     esac
-    read -rp "Press Enter to continue..."
+
+    # Hanya minta "Press Enter" jika ada aksi yang dilakukan (bukan pilihan invalid)
+    if [[ "$choice" =~ ^[0-7]$ ]]; then
+        read -rp "Press Enter to continue..."
+    fi
 done

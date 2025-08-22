@@ -42,38 +42,22 @@ function prepare_build_files() {
 FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND=noninteractive
 
-# ✅ BAGIAN 1: DEPENDENSI STABIL (AKAN DI-CACHE)
-# Lapisan ini hanya akan dibuat sekali dan akan digunakan lagi di build berikutnya
-# selama tidak ada perubahan di sini.
+# Base dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     curl git build-essential pkg-config libssl-dev \
     clang libclang-dev cmake jq ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-# Instal Rust (juga akan di-cache)
+# Install rustup + latest nightly
 RUN curl --retry 3 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly --profile minimal
 ENV PATH="/root/.cargo/bin:${PATH}"
 
-
-# ✅ BAGIAN 2: KODE SUMBER & KOMPILASI (BAGIAN DINAMIS)
+# Clone nexus-cli source
 WORKDIR /app
-# Clone repositori HANYA jika direktori belum ada.
-# Lapisan ini juga akan di-cache setelah dijalankan pertama kali.
 RUN git clone --depth=1 https://github.com/nexus-xyz/nexus-cli.git
 
-# Ini adalah "pemicu" update kita.
-# Dengan ARG, kita bisa membatalkan cache di titik ini secara sengaja.
-ARG CACHE_BUSTER=
-WORKDIR /app/nexus-cli
-# Perintah 'git pull' akan mengambil kode terbaru.
-# 'git config' ditambahkan untuk keamanan jika ada masalah kepemilikan.
-RUN echo "Updating source with cache buster: $CACHE_BUSTER" && \
-    git config --global --add safe.directory /app/nexus-cli && \
-    git pull
-
-# Build ulang aplikasi. Lapisan ini akan otomatis berjalan ulang karena
-# lapisan 'git pull' di atasnya selalu diperbarui.
+# Build
 WORKDIR /app/nexus-cli/clients/cli
 RUN cargo build --release && \
     strip target/release/nexus-network && \
@@ -85,7 +69,6 @@ RUN chmod +x /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
 EOF
 
-  # Salin entrypoint.sh (tidak ada perubahan di sini)
   cat > "$BUILD_DIR/entrypoint.sh" <<'EOF'
 #!/bin/bash
 set -e
@@ -138,18 +121,11 @@ function build_image() {
 
 function build_image_latest() {
     cd "$BUILD_DIR"
-    echo "🔧 Updating to the latest official version (fast method)..."
-    
-    # Kita kirim 'build argument' dengan nilai waktu saat ini.
-    # Ini memastikan lapisan 'git pull' di Dockerfile selalu dianggap baru
-    # dan dijalankan ulang, sementara lapisan sebelumnya tetap dari cache.
-    docker build \
-        --build-arg CACHE_BUSTER=$(date +%s) \
-        -t "$IMAGE_NAME" . || {
+    echo "🔧 Updating to the latest official version..."
+    docker build -t "$IMAGE_NAME" . || {
         echo "❌ Image build failed" >&2
         exit 1
     }
-    
     echo "✅ Image update complete, current version:"
     docker run --rm --entrypoint nexus-network "$IMAGE_NAME" --version
 }
@@ -297,7 +273,6 @@ function calculate_uptime() {
     local minutes=$(( (total_seconds % 3600) / 60 ))
     printf "%02dh%02dm" "$hours" "$minutes"
 }
-
 function show_container_logs() {
     containers=()
     while IFS= read -r line; do
@@ -308,11 +283,11 @@ function show_container_logs() {
 
     while true; do
         clear
-        echo -e "\033[36m📝 Nexus Node Log Viewer\033[0m"
-        echo -e "\033[34m--------------------------------\033[0m"
+        echo "Nexus Node Log Viewer"
+        echo "--------------------------------"
 
         if [ ${#containers[@]} -eq 0 ]; then
-            echo -e "⚠️  \033[31mNo running instances\033[0m"
+            echo "⚠️ No running instances"
             sleep 2
             return
         fi
@@ -320,7 +295,7 @@ function show_container_logs() {
         for i in "${!containers[@]}"; do
             status=$(docker inspect -f '{{.State.Status}}' "${containers[i]}")
             node_id=$(docker inspect "${containers[i]}" --format '{{range .Config.Env}}{{println .}}{{end}}' | grep "^NODE_ID=" | cut -d= -f2)
-            echo -e "[$((i+1))] ${containers[i]} (Status: \033[32m$status\033[0m | Node ID: ${node_id:-Not Set})"
+            echo "[$((i+1))] ${containers[i]} (Status: $status | Node ID: ${node_id:-Not Set})"
         done
 
         echo
@@ -331,23 +306,10 @@ function show_container_logs() {
         [[ "$input" =~ ^[0-9]+$ ]] && [ "$input" -le "${#containers[@]}" ] && {
             container="${containers[$((input-1))]}"
             clear
-            echo -e "🔍 \033[36mReal-time log:\033[0m $container (\033[33mCtrl+C to exit\033[0m)"
-            echo -e "\033[34m--------------------------------\033[0m"
-
+            echo "🔍 Real-time log: $container (Ctrl+C to exit)"
+            echo "--------------------------------"
             trap "echo; return 0" SIGINT
-            docker logs -f --tail=20 "$container" 2>&1 | while IFS= read -r line; do
-                if [[ "$line" == *"Waiting"* ]] || [[ "$line" == *"Task completed"* ]] || [[ "$line" == *"Fetching task"* ]]; then
-                    echo -e "\033[36m$line\033[0m"   # Cyan
-                elif [[ "$line" == *"Proof generated for task"* ]]; then
-                    echo -e "\033[33m$line\033[0m"   # Kuning
-                elif [[ "$line" == *"Got task"* ]] || [[ "$line" == *"Proving task"* ]] || [[ "$line" == *"Proof submitted successfully"* ]] || [[ "$line" == *"Submitting proof for task"* ]]; then
-                    echo -e "\033[32m$line\033[0m"   # Hijau
-                elif [[ "$line" == *"Error"* ]] || [[ "$line" == *"Failed"* ]] || [[ "$line" == *"ERROR"* ]]; then
-                    echo -e "\033[31m$line\033[0m"   # Merah
-                else
-                    echo "$line"                     # Default (tanpa warna)
-                fi
-            done
+            docker logs -f --tail=20 "$container"
             trap - SIGINT
             read -rp "Press Enter to continue..."
         }
@@ -355,9 +317,18 @@ function show_container_logs() {
 }
 
 function show_menu() {
+    # --- Color Definitions ---
+    GREEN='\033[0;32m'
+    BLUE='\033[0;34m'
+    CYAN='\033[0;36m'
+    YELLOW='\033[0;33m'
+    PURPLE='\033[0;35m'
+    RED='\033[0;31m'
+    NC='\033[0m' # No Color
+
     clear
    # Green NEXUS title (block version)
-    echo -e "${GREEN}"
+    echo -e "${WHITE}"
     echo "███╗   ██╗███████╗██╗  ██╗██╗   ██╗███████╗       ██████╗██╗     ██╗"
     echo "████╗  ██║██╔════╝╚██╗██╔╝██║   ██║██╔════╝      ██╔════╝██║     ██║"
     echo "██╔██╗ ██║█████╗   ╚███╔╝ ██║   ██║███████╗█████╗██║     ██║     ██║"
@@ -365,62 +336,57 @@ function show_menu() {
     echo "██║ ╚████║███████╗██╔╝ ██╗╚██████╔╝███████║      ╚██████╗███████╗██║"
     echo "╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝       ╚═════╝╚══════╝╚═╝"
     echo -e "${NC}"
-    
-    # Subtitle
-    echo -e "\n${CYAN}                🚀 NEXUS Node Management Console v2.2 🚀${NC}"
-    echo -e "${BLUE}==================================================================================${NC}\n"
+    echo -e "${CYAN}                Nexus Node Management Console v2.1${NC}"
 
-    # System resources
-    printf " ${YELLOW}🖥️  System Resources ${BLUE}| CPU:${GREEN} %-2d core ${BLUE}| Memory:${GREEN} %-5s${NC}\n" \
-        $(nproc) $(free -h | awk '/Mem:/{print $4}')
-    echo -e "${BLUE}----------------------------------------------------------------------------------${NC}"
+    # --- System & Docker Info ---
+    total_containers=$(docker ps -a --filter "name=nexus-node-" | wc -l)
+    running_containers=$(docker ps --filter "name=nexus-node-" | wc -l)
+    cpu_cores=$(nproc)
+    mem_free=$(free -h | awk '/^Mem:/{print $4}')
 
-    # ✅ HEADER TABEL BARU DENGAN KOLOM THREADS
-    printf "${CYAN}%-16s %-10s %-8s %-9s %-8s %-10s %-16s${NC}\n" \
-        "Container Name" "Node ID" "CPU" "RAM" "Threads" "Uptime" "Tasks Completed"
-    echo -e "${BLUE}----------------------------------------------------------------------------------${NC}"
+    echo -e "${BLUE}╭───────────────────────────────────────────────────────────────────────────────╮${NC}"
+    printf "${BLUE}│ ${YELLOW}🖥️ System: ${GREEN}%-2s Cores / %-6s Free${NC} ${YELLOW}🐳 Docker: ${GREEN}%d Running / %d Total Nodes${NC}${BLUE}        │\n" "$cpu_cores" "$mem_free" "$((running_containers - 1))" "$((total_containers - 1))"
+    echo -e "${BLUE}├───────────────────────────────────────────────────────────────────────────────┤${NC}"
 
-    # Mendapatkan daftar kontainer nexus yang berjalan
-    running_containers=$(docker ps --filter "name=nexus-node-" --format "{{.Names}}")
+    # --- Node Table Header ---
+    printf "${BLUE}│ ${CYAN}%-15s ${BLUE}│ ${CYAN}%-10s ${BLUE}│ ${CYAN}%-8s ${BLUE}│ ${CYAN}%-8s ${BLUE}│ ${CYAN}%-10s ${BLUE}│ ${CYAN}%-12s${NC}${BLUE}│\n" "CONTAINER" "NODE ID" "UPTIME" "CPU %" "RAM USAGE" "TASKS"
+    echo -e "${BLUE}├───────────────────────────────────────────────────────────────────────────────┤${NC}"
 
-    if [ -z "$running_containers" ]; then
-        echo -e "  ⚠️  No running instances found."
+    # --- Node Table Body ---
+    # Fetch all running container names first
+    containers=$(docker ps --filter "name=nexus-node-" --format "{{.Names}}")
+    if [ -z "$containers" ]; then
+        echo -e "│ ${YELLOW}No running Nexus nodes found. Use option '2' to start instances.${NC}                  │"
     else
-        # Loop melalui setiap kontainer yang berjalan
-        while read -r name; do
-            node_id=$(docker inspect "$name" --format '{{.Config.Env}}' | grep -o 'NODE_ID=[0-9]*' | cut -d= -f2)
+        # Use docker stats to get CPU and RAM for all containers at once for efficiency
+        docker stats --no-stream --format "{{.Name}},{{.CPUPerc}},{{.MemUsage}}" $containers | while IFS=, read -r name cpu_perc mem_usage; do
+            # Extract only the used memory part (e.g., "12.34MiB")
+            ram=$(echo "$mem_usage" | awk '{print $1}')
+            
+            # Get other details
+            node_id=$(docker inspect "$name" --format '{{range .Config.Env}}{{if eq (index (split . "=") 0) "NODE_ID"}}{{(index (split . "=") 1)}}{{end}}{{end}}')
             uptime=$(calculate_uptime "$name")
-            tasks=$(grep -c "Proof submitted" "/root/nexus-node/logs/nexus-${node_id}.log" 2>/dev/null || echo 0)
-            
-            # Mendapatkan stats CPU & RAM
-            stats_line=$(docker stats --no-stream --format "{{.CPUPerc}}|{{.MemUsage}}" "$name" 2>/dev/null)
-            if [[ -n "$stats_line" ]]; then
-                cpu_usage=$(echo "$stats_line" | cut -d'|' -f1)
-                mem_usage=$(echo "$stats_line" | cut -d'|' -f2 | awk '{print $1}')
-            else
-                cpu_usage="N/A"
-                mem_usage="N/A"
-            fi
-            
-            # ✅ MENDAPATKAN JUMLAH THREADS DARI KONFIGURASI KONTAINER
-            # Mengambil argumen start (--max-threads) dari metadata kontainer
-            threads=$(docker inspect -f '{{.Config.Cmd}}' "$name" | tr ' ' '\n' | grep -A 1 -E -- "--max-threads" | tail -n 1 || echo "N/A")
+            tasks=$(grep -c "Proof submitted" "${LOG_DIR}/nexus-${node_id}.log" 2>/dev/null || echo 0)
 
-            # ✅ PRINTF BARU DENGAN DATA THREADS
-            printf "${PURPLE}%-16s${NC} ${GREEN}%-10s${NC} ${CYAN}%-8s${NC} ${CYAN}%-9s${NC} ${GREEN}%-8s${NC} ${YELLOW}%-10s${NC} ${RED}%-16s${NC}\n" \
-                "$name" "$node_id" "$cpu_usage" "$mem_usage" "$threads" "$uptime" "$tasks tasks"
-
-        done <<< "$running_containers"
+            # Print formatted row
+            printf "${BLUE}│ ${CYAN}%-15s${NC} ${BLUE}│ ${GREEN}%-10s${NC} ${BLUE}│ ${YELLOW}%-8s${NC} ${BLUE}│ ${CYAN}%-8s${NC} ${BLUE}│ ${CYAN}%-10s${NC} ${BLUE}│ ${GREEN}%-4s tasks${NC} ${BLUE} │\n" \
+                "$name" \
+                "${node_id:-N/A}" \
+                "$uptime" \
+                "$cpu_perc" \
+                "$ram" \
+                "$tasks"
+        done
     fi
+    echo -e "${BLUE}╰───────────────────────────────────────────────────────────────────────────────╯${NC}"
 
-    # Function menu
-    echo -e "\n${BLUE}==================================================================================${NC}"
-    echo -e "${CYAN}                            ⚙️  Function Menu Options ⚙️${NC}"
-    echo -e "${BLUE}----------------------------------------------------------------------------------${NC}"
-    echo -e " ${GREEN}[1]${NC} Build Image      ${GREEN}[2]${NC} Start Instances    ${GREEN}[3]${NC} Stop All"
-    echo -e " ${GREEN}[4]${NC} View Logs        ${GREEN}[5]${NC} Restart Node       ${GREEN}[6]${NC} Add Instance"
-    echo -e " ${GREEN}[7]${NC} Update Version   ${GREEN}[0]${NC} Exit"
-    echo -e "${BLUE}==================================================================================${NC}\n"
+    # --- Function Menu ---
+    echo -e "${BLUE}╭─────────────────────────── ${CYAN}MENU ${BLUE}────────────────────────────╮${NC}"
+    echo -e "${BLUE}│ ${CYAN}1. Build/Rebuild Image${NC}      ${BLUE}│ ${CYAN}5. Restart a Node${NC}             ${BLUE}│"
+    echo -e "${BLUE}│ ${CYAN}2. Start Multiple Instances${NC} ${BLUE}│ ${CYAN}6. Add One Instance${NC}           ${BLUE}│"
+    echo -e "${BLUE}│ ${CYAN}3. Stop All Nodes${NC}           ${BLUE}│ ${CYAN}7. Update to Latest Code${NC}      ${BLUE}│"
+    echo -e "${BLUE}│ ${CYAN}4. View Node Logs${NC}           ${BLUE}│ ${CYAN}0. Exit Program${NC}               ${BLUE}│"
+    echo -e "${BLUE}╰─────────────────────────────────────────────────────────────╯${NC}"
 }
 
 # ========== Main Program ==========
