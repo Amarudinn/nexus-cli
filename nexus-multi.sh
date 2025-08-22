@@ -345,7 +345,7 @@ function show_menu() {
     mem_free=$(free -h | awk '/^Mem:/{print $4}')
 
     echo -e "${BLUE}╭───────────────────────────────────────────────────────────────────────────────╮${NC}"
-    printf "${BLUE}│  ${YELLOW}🖥️ System: ${GREEN}%-2s Cores / %-6s Free${NC} ${YELLOW}🐳 Docker: ${GREEN}%d Running / %d Total Nodes${NC}${BLUE}       │\n" "$cpu_cores" "$mem_free" "$((running_containers - 1))" "$((total_containers - 1))"
+    printf "${BLUE}│ ${YELLOW}🖥️ System: ${GREEN}%-2s Cores / %-6s Free${NC} ${YELLOW}🐳 Docker: ${GREEN}%d Running / %d Total Nodes${NC}${BLUE}       │\n" "$cpu_cores" "$mem_free" "$((running_containers - 1))" "$((total_containers - 1))"
     echo -e "${BLUE}├───────────────────────────────────────────────────────────────────────────────┤${NC}"
 
     # --- Node Table Header ---
@@ -369,7 +369,7 @@ function show_menu() {
             tasks=$(grep -c "Proof submitted" "${LOG_DIR}/nexus-${node_id}.log" 2>/dev/null || echo 0)
 
             # Print formatted row
-            printf "${BLUE}│ ${PURPLE}%-15s${NC} ${BLUE}│ ${GREEN}%-10s${NC} ${BLUE}│ ${YELLOW}%-8s${NC} ${BLUE}│ ${CYAN}%-8s${NC} ${BLUE}│ ${CYAN}%-10s${NC} ${BLUE}│ ${GREEN}%-4s tasks${NC} ${BLUE} │\n" \
+            printf "${BLUE}│ ${CYAN}%-15s${NC} ${BLUE}│ ${GREEN}%-10s${NC} ${BLUE}│ ${YELLOW}%-8s${NC} ${BLUE}│ ${CYAN}%-8s${NC} ${BLUE}│ ${CYAN}%-10s${NC} ${BLUE}│ ${GREEN}%-4s tasks${NC} ${BLUE} │\n" \
                 "$name" \
                 "${node_id:-N/A}" \
                 "$uptime" \
