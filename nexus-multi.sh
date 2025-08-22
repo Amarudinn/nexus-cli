@@ -382,10 +382,10 @@ function show_menu() {
 
     # --- Function Menu ---
     echo -e "${BLUE}╭─────────────────────────── ${CYAN}MENU ${BLUE}────────────────────────────╮${NC}"
-    echo -e "${BLUE}│ ${CYAN}1. Build/Rebuild Image${NC}       ${BLUE}│ ${CYAN}5. Restart a Node${NC}          ${BLUE}│"
-    echo -e "${BLUE}│ ${CYAN}2. Start Multiple Instances${NC}  ${BLUE}│ ${CYAN}6. Add One Instance${NC}        ${BLUE}│"
-    echo -e "${BLUE}│ ${CYAN}3. Stop All Nodes${NC}            ${BLUE}│ ${CYAN}7. Update to Latest Code${NC}   ${BLUE}│"
-    echo -e "${BLUE}│ ${CYAN}4. View Node Logs${NC}            ${BLUE}│ ${CYAN}0. Exit Program${NC}            ${BLUE}│"
+    echo -e "${BLUE}│ ${CYAN}1. Build/Rebuild Image${NC}      ${BLUE}│ ${CYAN}5. Restart a Node${NC}             ${BLUE}│"
+    echo -e "${BLUE}│ ${CYAN}2. Start Multiple Instances${NC} ${BLUE}│ ${CYAN}6. Add One Instance${NC}           ${BLUE}│"
+    echo -e "${BLUE}│ ${CYAN}3. Stop All Nodes${NC}           ${BLUE}│ ${CYAN}7. Update to Latest Code${NC}      ${BLUE}│"
+    echo -e "${BLUE}│ ${CYAN}4. View Node Logs${NC}           ${BLUE}│ ${CYAN}0. Exit Program${NC}               ${BLUE}│"
     echo -e "${BLUE}╰─────────────────────────────────────────────────────────────╯${NC}"
 }
 
@@ -394,14 +394,11 @@ function show_menu() {
 check_docker
 init_dirs
 
-while true; do
-    # Loop internal untuk real-time update
     while true; do
         show_menu
-        # Membaca 1 karakter input dengan timeout 1 detik
-        read -t 1 -N 1 choice
-        # Jika ada input (exit code 0), hentikan loop real-time
-        if [ $? -eq 0 ]; then
+        # Langsung cek kondisi read di dalam 'if' untuk menghindari 'set -e'
+        if read -t 1 -N 1 choice; then
+            # Jika read berhasil mendapat input, hentikan loop real-time
             break
         fi
     done
