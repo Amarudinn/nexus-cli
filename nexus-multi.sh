@@ -335,7 +335,7 @@ function show_menu() {
     YELLOW='\033[1;33m'
     CYAN='\033[0;36m'
     PURPLE='\033[0;35m'
-    RED='\033[0;31m' # <-- FIX: Corrected the typo from \03_3 to \033
+    RED='\033[0;31m'
     NC='\033[0m' # No Color
 
     # Title
@@ -379,7 +379,7 @@ function show_menu() {
             printf "${BLUE}║${PURPLE} %-18s ${BLUE}│${GREEN} %-10s ${BLUE}│${YELLOW} %-7s ${BLUE}│${YELLOW} %-7s ${BLUE}│${RED} %-12s ${BLUE}║${NC}\n" \
                    "$name" "$node_id" "$cpu_usage" "$mem_usage" "$tasks tasks"
         done
-    if
+    fi
 
     # Footer and Menu Options
     echo -e "${BLUE}╚════════════════════╧════════════╧═════════╧═════════╧══════════════╝${NC}"
