@@ -296,7 +296,7 @@ function show_container_logs() {
         clear
         # --- Header ---
         echo -e "${BLUE}╭──────────────────────────────────────────────────────────────────╮${NC}"
-        echo -e "${BLUE}│${CYAN} 📜 Nexus Node Log Viewer                                        ${BLUE}│${NC}"
+        echo -e "${BLUE}│${CYAN} 📜 Nexus Node Log Viewer                                         ${BLUE}│${NC}"
         echo -e "${BLUE}├──────────────────────────────────────────────────────────────────┤${NC}"
 
         if [ ${#containers[@]} -eq 0 ]; then
@@ -341,7 +341,27 @@ function show_container_logs() {
             # Menangkap Ctrl+C agar kembali dengan mulus
             trap "echo -e '\n${YELLOW}Log view stopped.${NC}'; return 0" SIGINT
             
-            docker logs -f --tail=50 "$container"
+            # Mengalirkan output log ke loop untuk pewarnaan real-time
+            docker logs -f --tail=50 "$container" | while IFS= read -r line; do
+                case "$line" in
+                    Success*|StateChange*|Refresh*)
+                        # Warna hijau untuk pesan sukses dan informasi status
+                        echo -e "${GREEN}${line}${NC}"
+                        ;;
+                    Error*)
+                        # Warna merah untuk pesan error yang jelas
+                        echo -e "${RED}${line}${NC}"
+                        ;;
+                    Waiting*)
+                        # Warna kuning untuk status menunggu atau transisi
+                        echo -e "${YELLOW}${line}${NC}"
+                        ;;
+                    *)
+                        # Tidak ada warna untuk baris log lainnya
+                        echo "$line"
+                        ;;
+                esac
+            done
             
             # Mereset trap ke kondisi normal
             trap - SIGINT
@@ -364,7 +384,7 @@ function show_menu() {
 
     clear
    # Green NEXUS title (block version)
-    echo -e "${WHITE}"
+    echo -e "${NC}"
     echo "███╗   ██╗███████╗██╗  ██╗██╗   ██╗███████╗       ██████╗██╗     ██╗"
     echo "████╗  ██║██╔════╝╚██╗██╔╝██║   ██║██╔════╝      ██╔════╝██║     ██║"
     echo "██╔██╗ ██║█████╗   ╚███╔╝ ██║   ██║███████╗█████╗██║     ██║     ██║"
