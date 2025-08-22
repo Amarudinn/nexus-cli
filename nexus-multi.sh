@@ -197,9 +197,9 @@ function start_instances() {
         if ! docker run -dit \
             --name "nexus-node-$i" \
             -e NODE_ID="$NODE_ID" \
+            -e MAX_THREADS=8 \
             -v "$LOG_DIR":/nexus-data \
-            "$IMAGE_NAME" \
-            start --node-id "$NODE_ID" --max-threads 8 --headless; then
+            "$IMAGE_NAME"; then
             echo "❌ Instance nexus-node-$i failed to start"
             continue
         fi
@@ -228,9 +228,9 @@ function add_one_instance() {
     docker run -dit \
         --name "nexus-node-${NEXT_IDX}" \
         -e NODE_ID="$NODE_ID" \
+        -e MAX_THREADS=8 \
         -v "$LOG_DIR":/nexus-data \
-        "$IMAGE_NAME" \
-        start --node-id "$NODE_ID" --max-threads 8 --headless
+        "$IMAGE_NAME"
 
     echo "✅ Instance nexus-node-${NEXT_IDX} started successfully (threads: 8)"
 }
