@@ -344,11 +344,11 @@ function show_menu() {
     mem_free=$(free -h | awk '/^Mem:/{print $4}')
 
     echo -e "${BLUE}╭───────────────────────────────────────────────────────────────────────────────╮${NC}"
-    printf "${YELLOW}│ 🖥️  System: ${GREEN}%-2s Cores / %-6s Free${NC}  ${YELLOW}🐳 Docker: ${GREEN}%d Running / %d Total Nodes${NC}          │\n" "$cpu_cores" "$mem_free" "$((running_containers - 1))" "$((total_containers - 1))"
+    printf "${YELLOW} 🖥️ System: ${GREEN}%-2s Cores / %-6s Free${NC} ${YELLOW}🐳 Docker: ${GREEN}%d Running / %d Total Nodes${NC}│\n"
     echo -e "${BLUE}├───────────────────────────────────────────────────────────────────────────────┤${NC}"
 
     # --- Node Table Header ---
-    printf "│ ${CYAN}%-15s │ %-10s │ %-8s │ %-8s │ %-10s │ %-12s${NC} │\n" "CONTAINER" "NODE ID" "UPTIME" "CPU %" "RAM USAGE" "TASKS"
+    printf "${BLUE}│ ${CYAN}%-15s │ %-10s │ %-8s │ %-8s │ %-10s │ %-12s${NC} │\n" "CONTAINER" "NODE ID" "UPTIME" "CPU %" "RAM USAGE" "TASKS"
     echo -e "${BLUE}├───────────────────────────────────────────────────────────────────────────────┤${NC}"
 
     # --- Node Table Body ---
@@ -381,10 +381,10 @@ function show_menu() {
 
     # --- Function Menu ---
     echo -e "${BLUE}╭─────────────────────────── MENU ────────────────────────────╮${NC}"
-    echo -e "│ ${CYAN}1. Build/Rebuild Image${NC}      │ ${CYAN}5. Restart a Node${NC}         │"
-    echo -e "│ ${CYAN}2. Start Multiple Instances${NC}  │ ${CYAN}6. Add One Instance${NC}        │"
-    echo -e "│ ${CYAN}3. Stop All Nodes${NC}            │ ${CYAN}7. Update to Latest Code${NC}   │"
-    echo -e "│ ${CYAN}4. View Node Logs${NC}            │ ${CYAN}0. Exit Program${NC}            │"
+    echo -e " ${CYAN}1. Build/Rebuild Image${NC}       ${BLUE}│ ${CYAN}5. Restart a Node${NC}           "
+    echo -e " ${CYAN}2. Start Multiple Instances${NC}  ${BLUE}│ ${CYAN}6. Add One Instance${NC}         "
+    echo -e " ${CYAN}3. Stop All Nodes${NC}            ${BLUE}│ ${CYAN}7. Update to Latest Code${NC}    "
+    echo -e " ${CYAN}4. View Node Logs${NC}            ${BLUE}│ ${CYAN}0. Exit Program${NC}             "
     echo -e "${BLUE}╰─────────────────────────────────────────────────────────────╯${NC}"
 }
 
