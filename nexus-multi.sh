@@ -335,17 +335,16 @@ function show_menu() {
     YELLOW='\033[1;33m'
     CYAN='\033[0;36m'
     PURPLE='\033[0;35m'
-    RED='\03_3[0;31m'
+    RED='\033[0;31m' # <-- FIX: Corrected the typo from \03_3 to \033
     NC='\033[0m' # No Color
 
-   # Green NEXUS title (block version)
+    # Title
     echo -e "${GREEN}"
-    echo "███╗   ██╗███████╗██╗  ██╗██╗   ██╗███████╗       ██████╗██╗     ██╗"
-    echo "████╗  ██║██╔════╝╚██╗██╔╝██║   ██║██╔════╝      ██╔════╝██║     ██║"
-    echo "██╔██╗ ██║█████╗   ╚███╔╝ ██║   ██║███████╗█████╗██║     ██║     ██║"
-    echo "██║╚██╗██║██╔══╝   ██╔██╗ ██║   ██║╚════██║╚════╝██║     ██║     ██║"
-    echo "██║ ╚████║███████╗██╔╝ ██╗╚██████╔╝███████║      ╚██████╗███████╗██║"
-    echo "╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝       ╚═════╝╚══════╝╚═╝"
+    echo "  N   N  EEEEE  X   X  U   U  SSSSS"
+    echo "  NN  N  E       X X   U   U  S    "
+    echo "  N N N  EEE      X    U   U  SSSSS"
+    echo "  N  NN  E       X X   U   U      S"
+    echo "  N   N  EEEEE  X   X   UUU   SSSSS"
     echo -e "${NC}"
     echo -e "${CYAN}     ░N░E░X░U░S░ Node Management Console v2.1${NC}"
     
@@ -356,7 +355,7 @@ function show_menu() {
     echo -e "${BLUE}╠════════════════════╤════════════╤═════════╤═════════╤══════════════╣${NC}"
 
     # Node Table Header
-    printf "${BLUE}║${CYAN} Container Name     ${BLUE}│${CYAN} Node ID    ${BLUE}│${CYAN} CPU %   ${BLUE}│${CYAN} Memory  ${BLUE}│${CYAN} Tasks Done   ${BLUE}║${NC}\n"
+    printf "${BLUE}║${CYAN} Container Name     ${BLUE}│${CYAN} Node ID    ${BLUE}│${CYAN} CPU %%   ${BLUE}│${CYAN} Memory  ${BLUE}│${CYAN} Tasks Done   ${BLUE}║${NC}\n"
     echo -e "${BLUE}╠════════════════════╪════════════╪═════════╪═════════╪══════════════╣${NC}"
 
     # Node Table Content
