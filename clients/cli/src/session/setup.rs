@@ -120,10 +120,22 @@ pub async fn setup_session(
     // Create orchestrator client
     let orchestrator_client = OrchestratorClient::new(env.clone());
 
-    // Clamp the number of workers to [1, 75% of num_cores]. Leave room for other processes.
+    // Allow user to override CPU core limitation for WSL/container environments
     let total_cores = crate::system::num_cores();
     let max_workers = ((total_cores as f64 * 0.75).ceil() as usize).max(1);
-    let mut num_workers: usize = max_threads.unwrap_or(1).clamp(1, max_workers as u32) as usize;
+    
+    // If user explicitly sets max_threads, respect it (up to reasonable limit of 32)
+    let mut num_workers: usize = if let Some(requested) = max_threads {
+        let capped = std::cmp::min(requested as usize, 32);
+        eprintln!("🔍 CPU Debug:");
+        eprintln!("  Detected cores: {}", total_cores);
+        eprintln!("  CPU-based max workers: {}", max_workers);
+        eprintln!("  User requested: {}", requested);
+        eprintln!("  Final (capped at 32): {}", capped);
+        capped
+    } else {
+        max_workers // Use CPU-based calculation as default
+    };
 
     // Check memory and clamp threads if max-threads was explicitly set OR check-memory flag is set
     if max_threads.is_some() || check_mem {
