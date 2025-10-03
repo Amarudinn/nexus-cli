@@ -50,14 +50,14 @@ pub mod cli_consts {
         use std::time::Duration;
 
         /// Initial delay before retrying failed task fetch (milliseconds)
-        /// Reduced for faster task fetching
-        pub const INITIAL_BACKOFF_MS: u64 = 1_000; // 1 second
+        /// Set to 2 minutes to align with server task creation frequency
+        pub const INITIAL_BACKOFF_MS: u64 = 120_000; // 120 seconds (2 minutes)
         /// Maximum number of retry attempts for task fetching
         pub const MAX_RETRIES: u32 = 2;
 
         /// Minimum interval between task fetch requests (milliseconds)
-        /// Reduced for faster task fetching
-        pub const RATE_LIMIT_INTERVAL_MS: u64 = 1_000; // 1 second
+        /// Set to 2 minutes to align with server task creation frequency
+        pub const RATE_LIMIT_INTERVAL_MS: u64 = 120_000; // 120 seconds (2 minutes)
 
         /// Random delay range for waiting (seconds)
         pub const RANDOM_DELAY_MIN_SECS: u64 = 1;

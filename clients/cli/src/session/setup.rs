@@ -45,6 +45,14 @@ fn clamp_threads_by_memory(requested_threads: usize) -> usize {
     let available_memory = (total_system_memory as f64 * 0.75) as u64;
     let max_threads_by_memory = (available_memory / memory_per_thread) as usize;
 
+    // Debug info for memory calculation
+    eprintln!("🔍 Memory Debug:");
+    eprintln!("  Total RAM: {:.1} GB", total_system_memory as f64 / 1024.0 / 1024.0 / 1024.0);
+    eprintln!("  Available (75%): {:.1} GB", available_memory as f64 / 1024.0 / 1024.0 / 1024.0);
+    eprintln!("  Per thread: {:.1} GB", memory_per_thread as f64 / 1024.0 / 1024.0 / 1024.0);
+    eprintln!("  Max threads by memory: {}", max_threads_by_memory);
+    eprintln!("  Requested threads: {}", requested_threads);
+
     // Return the minimum of requested threads and memory-limited threads
     // Always allow at least 1 thread
     requested_threads.min(max_threads_by_memory.max(1))
