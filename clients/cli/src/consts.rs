@@ -27,7 +27,8 @@ pub mod cli_consts {
     pub const SUBPROCESS_INTERNAL_ERROR_CODE: i32 = 3;
 
     /// "Reasonable" generic projection task memory requirement.
-    pub const PROJECTED_MEMORY_REQUIREMENT: u64 = 4294967296; // 4gb
+    /// Updated based on actual usage: ~1.1GB per thread
+    pub const PROJECTED_MEMORY_REQUIREMENT: u64 = 1181116006; // 1.1gb
 
     // =============================================================================
     // DIFFICULTY CONFIGURATION
@@ -49,14 +50,18 @@ pub mod cli_consts {
         use std::time::Duration;
 
         /// Initial delay before retrying failed task fetch (milliseconds)
-        /// Set to 2 minutes to align with server task creation frequency
-        pub const INITIAL_BACKOFF_MS: u64 = 120_000;
+        /// Reduced for faster task fetching
+        pub const INITIAL_BACKOFF_MS: u64 = 1_000; // 1 second
         /// Maximum number of retry attempts for task fetching
         pub const MAX_RETRIES: u32 = 2;
 
         /// Minimum interval between task fetch requests (milliseconds)
-        /// Set to 2 minutes to align with server task creation frequency
-        pub const RATE_LIMIT_INTERVAL_MS: u64 = 120_000;
+        /// Reduced for faster task fetching
+        pub const RATE_LIMIT_INTERVAL_MS: u64 = 1_000; // 1 second
+
+        /// Random delay range for waiting (seconds)
+        pub const RANDOM_DELAY_MIN_SECS: u64 = 1;
+        pub const RANDOM_DELAY_MAX_SECS: u64 = 10;
 
         /// Helper function to get initial backoff duration
         pub const fn initial_backoff() -> Duration {
@@ -66,6 +71,14 @@ pub mod cli_consts {
         /// Helper function to get rate limit interval
         pub const fn rate_limit_interval() -> Duration {
             Duration::from_millis(RATE_LIMIT_INTERVAL_MS)
+        }
+
+        /// Helper function to get random delay duration
+        pub fn random_delay() -> Duration {
+            use rand::Rng;
+            let mut rng = rand::thread_rng();
+            let delay_secs = rng.gen_range(RANDOM_DELAY_MIN_SECS..=RANDOM_DELAY_MAX_SECS);
+            Duration::from_secs(delay_secs)
         }
     }
 
@@ -101,10 +114,10 @@ pub mod cli_consts {
         use std::time::Duration;
 
         /// Maximum requests per time window for task fetching
-        pub const TASK_FETCH_MAX_REQUESTS_PER_WINDOW: u32 = 60;
+        pub const TASK_FETCH_MAX_REQUESTS_PER_WINDOW: u32 = 1000; // Increased limit
 
         /// Time window duration for task fetching rate limiting (milliseconds)
-        pub const TASK_FETCH_WINDOW_MS: u64 = 60_000; // 1 minute
+        pub const TASK_FETCH_WINDOW_MS: u64 = 10_000; // 10 seconds
 
         /// Maximum requests per time window for proof submission
         pub const SUBMISSION_MAX_REQUESTS_PER_WINDOW: u32 = 100;

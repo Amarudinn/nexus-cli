@@ -68,6 +68,16 @@ impl AuthenticatedWorker {
     pub async fn run(mut self, mut shutdown: broadcast::Receiver<()>) -> Vec<JoinHandle<()>> {
         let mut join_handles = Vec::new();
 
+        // Add random startup delay to prevent multi-node collision
+        let startup_delay = crate::consts::cli_consts::task_fetching::random_delay();
+        self.event_sender
+            .send_event(Event::state_change(
+                ProverState::Waiting,
+                format!("Starting in {} seconds (randomized startup)", startup_delay.as_secs()),
+            ))
+            .await;
+        tokio::time::sleep(startup_delay).await;
+
         // Send initial state
         self.event_sender
             .send_event(Event::state_change(
@@ -85,8 +95,7 @@ impl AuthenticatedWorker {
                         if should_exit {
                             break;
                         }
-                        // Natural rate limiting through work cycle
-                        tokio::time::sleep(Duration::from_millis(100)).await;
+                        // No artificial delay - let network rate limiting handle timing
                     }
                 }
             }
@@ -103,8 +112,9 @@ impl AuthenticatedWorker {
         let task = match self.fetcher.fetch_task().await {
             Ok(task) => task,
             Err(_) => {
-                // Error already logged in fetcher, wait before retry
-                tokio::time::sleep(Duration::from_secs(1)).await;
+                // Error already logged in fetcher, wait random time before retry
+                let random_delay = crate::consts::cli_consts::task_fetching::random_delay();
+                tokio::time::sleep(random_delay).await;
                 return false; // Don't exit on fetch error, just retry
             }
         };

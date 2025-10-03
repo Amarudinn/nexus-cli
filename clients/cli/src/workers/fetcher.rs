@@ -80,22 +80,25 @@ impl TaskFetcher {
                 .await;
         }
 
-        // Wait until we can proceed with accurate timing
+        // Wait until we can proceed with random timing to avoid collision
         while !self.network_client.request_timer_mut().can_proceed() {
-            let wait_time = self.network_client.request_timer_mut().time_until_next();
-            if wait_time > Duration::ZERO {
-                // Log the accurate wait time here
+            let base_wait_time = self.network_client.request_timer_mut().time_until_next();
+            if base_wait_time > Duration::ZERO {
+                // Use random delay instead of exact timing to avoid multi-node collision
+                let random_wait = crate::consts::cli_consts::task_fetching::random_delay();
+                let actual_wait = std::cmp::min(base_wait_time, random_wait);
+                
                 self.event_sender
                     .send_task_event(
                         format!(
-                            "Step 1 of 4: Waiting - ready for next task ({}) seconds",
-                            wait_time.as_secs()
+                            "Step 1 of 4: Waiting - ready for next task ({}) seconds (randomized)",
+                            actual_wait.as_secs()
                         ),
                         EventType::Waiting,
                         LogLevel::Info,
                     )
                     .await;
-                sleep(wait_time).await;
+                sleep(actual_wait).await;
             }
         }
 
